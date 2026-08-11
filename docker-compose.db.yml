@@ -1,7 +1,9 @@
 # ── DB 서버 전용 ─────────────────────────────────────────────
 # Postgres(PostGIS) + Redis 만 띄운다. 백엔드 서버와 분리 운영.
-# 접근은 오직 백엔드 서버의 "사설 IP" 로만. 공개 포트(5432/6379)는
-# Lightsail 방화벽에서 절대 열지 말 것(기본 차단 상태 유지).
+# 접근은 오직 백엔드 서버의 "사설 IP" 로만.
+# .env 의 BIND_ADDR 에 이 서버의 "사설 IP"(예: 172.26.15.90)를 넣으면
+# DB/Redis 가 공개 인터페이스엔 아예 뜨지 않고 사설망에서만 열린다(최강 격리).
+# 값을 안 넣으면 0.0.0.0(전체)로 열리고 Lightsail 방화벽이 공개를 막는다.
 services:
   postgres:
     image: postgis/postgis:16-3.4-alpine
@@ -16,10 +18,8 @@ services:
       - postgres-data:/var/lib/postgresql/data
       # 최초 기동 시 PostGIS 등 확장 설치
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-    # 0.0.0.0 바인딩 → 백엔드 박스가 사설망으로 접근 가능.
-    # 공개 노출은 Lightsail 방화벽(기본 차단)이 막는다.
     ports:
-      - '5432:5432'
+      - '${BIND_ADDR:-0.0.0.0}:5432:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-troot} -d ${DB_NAME:-troot}']
       interval: 10s
@@ -44,7 +44,7 @@ services:
     volumes:
       - redis-data:/data
     ports:
-      - '6379:6379'
+      - '${BIND_ADDR:-0.0.0.0}:6379:6379'
     healthcheck:
       test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 10s
