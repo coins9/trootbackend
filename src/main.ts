@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -27,7 +27,7 @@ async function bootstrap() {
     exclude: ['health', 'health/ready'],
   });
   // /api/v1/... 형태. 계약 변경 시 v2 를 병행 운영할 수 있다
-  app.enableVersioning({ type: 1 as never, defaultVersion: '1' });
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(compression());
