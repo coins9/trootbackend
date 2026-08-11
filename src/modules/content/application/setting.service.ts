@@ -15,6 +15,12 @@ export interface PublicSettings {
   supportEmail: string;
   supportHours: string;
   noticeBanner: string;
+  bannerBeginnerUrl: string;
+  bannerSupplyUrl: string;
+  bannerMediaUrl: string;
+  bannerBoothUrl: string;
+  adInquiryUrl: string;
+  partnerInquiryUrl: string;
 }
 
 const SETTINGS_CACHE_KEY = 'settings:public';
@@ -43,6 +49,12 @@ export class SettingService {
       supportEmail: map[SettingKey.SUPPORT_EMAIL],
       supportHours: map[SettingKey.SUPPORT_HOURS],
       noticeBanner: map[SettingKey.NOTICE_BANNER],
+      bannerBeginnerUrl: map[SettingKey.BANNER_BEGINNER_URL],
+      bannerSupplyUrl: map[SettingKey.BANNER_SUPPLY_URL],
+      bannerMediaUrl: map[SettingKey.BANNER_MEDIA_URL],
+      bannerBoothUrl: map[SettingKey.BANNER_BOOTH_URL],
+      adInquiryUrl: map[SettingKey.AD_INQUIRY_URL],
+      partnerInquiryUrl: map[SettingKey.PARTNER_INQUIRY_URL],
     };
   }
 

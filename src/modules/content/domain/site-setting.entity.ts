@@ -16,6 +16,14 @@ export enum SettingKey {
   SUPPORT_HOURS = 'support_hours',
   /** 공지 배너 문구 (비우면 미노출) */
   NOTICE_BANNER = 'notice_banner',
+  /** 왈라(Walla) 링크아웃 배너 URL — 비우면 앱 내부 등록으로 폴백 */
+  BANNER_BEGINNER_URL = 'banner_beginner_url',
+  BANNER_SUPPLY_URL = 'banner_supply_url',
+  BANNER_MEDIA_URL = 'banner_media_url',
+  BANNER_BOOTH_URL = 'banner_booth_url',
+  /** 타투이스트 광고 문의 배너 링크 (AdStats 프로모 배너 2종) */
+  AD_INQUIRY_URL = 'ad_inquiry_url',
+  PARTNER_INQUIRY_URL = 'partner_inquiry_url',
 }
 
 @Entity('site_settings')
@@ -38,4 +46,11 @@ export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   [SettingKey.SUPPORT_EMAIL]: 'contact@tattooroot.com',
   [SettingKey.SUPPORT_HOURS]: '평일 10:00 ~ 18:00 (주말 · 공휴일 휴무)',
   [SettingKey.NOTICE_BANNER]: '',
+  [SettingKey.BANNER_BEGINNER_URL]: '',
+  [SettingKey.BANNER_SUPPLY_URL]: '',
+  [SettingKey.BANNER_MEDIA_URL]: '',
+  [SettingKey.BANNER_BOOTH_URL]: '',
+  // 비우면 앱 기본 폼(현재 Tally)로 폴백되므로 기본값은 빈 값으로 둔다
+  [SettingKey.AD_INQUIRY_URL]: '',
+  [SettingKey.PARTNER_INQUIRY_URL]: '',
 };

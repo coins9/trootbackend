@@ -20,6 +20,24 @@ class UpdateSettingsDto {
 
   @IsOptional() @IsString() @MaxLength(300)
   [SettingKey.NOTICE_BANNER]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.BANNER_BEGINNER_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.BANNER_SUPPLY_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.BANNER_MEDIA_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.BANNER_BOOTH_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.AD_INQUIRY_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.PARTNER_INQUIRY_URL]?: string;
 }
 
 /** 앱·웹이 시작 시 읽어가는 공개 설정 */
