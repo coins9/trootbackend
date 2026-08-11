@@ -1,0 +1,23 @@
+# dependencies / build
+node_modules
+dist
+build
+
+# logs / coverage / caches
+*.log
+npm-debug.log*
+coverage
+.eslintcache
+
+# OS / editor
+.DS_Store
+.idea
+.vscode
+
+# secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+docker/cloudflared/*.json
+!docker/cloudflared/config.example.yml

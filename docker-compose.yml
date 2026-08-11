@@ -1,0 +1,96 @@
+# DB · Redis · API 를 개별 컨테이너로 분리.
+# 나중에 DB 를 별도 서버(또는 매니지드)로 옮길 때 .env 의 DB_HOST 만 바꾸면 된다.
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: troot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-troot}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-troot}
+      POSTGRES_DB: ${DB_NAME:-troot}
+      # 한국어 정렬/검색 대응
+      LANG: ko_KR.utf8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    # 외부에 직접 노출하지 않는다. 필요 시에만 localhost 로 바인딩
+    ports:
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-troot} -d ${DB_NAME:-troot}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [troot-data]
+
+  redis:
+    image: redis:7-alpine
+    container_name: troot-redis
+    restart: unless-stopped
+    # 캐시 전용: 메모리 상한 + LRU 축출로 비용을 고정한다
+    command: >
+      redis-server
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --appendonly no
+      --save ""
+    volumes:
+      - redis-data:/data
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [troot-data]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: troot-api
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      BEHIND_CLOUDFLARE: 'true'
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    # cloudflared 를 통해서만 외부에 노출되므로 호스트 포트를 열지 않는다
+    expose:
+      - '4000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks: [troot-data, troot-edge]
+
+  # api.tattooroot.com → 이 터널 → api:4000
+  # 공인 IP·방화벽 개방 없이 노출된다.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: troot-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      api: { condition: service_started }
+    networks: [troot-edge]
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  # DB/Redis 는 외부와 완전히 격리
+  troot-data:
+    driver: bridge
+  # 터널과 API 만 연결
+  troot-edge:
+    driver: bridge

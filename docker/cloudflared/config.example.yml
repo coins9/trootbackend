@@ -1,0 +1,28 @@
+# 토큰 방식(docker-compose 의 CLOUDFLARE_TUNNEL_TOKEN)을 쓰면 이 파일은 필요 없다.
+# 자격증명 파일 방식으로 운영할 때만 사용한다.
+#
+# 사전 준비 (Cloudflare 대시보드 또는 CLI):
+#   cloudflared tunnel login
+#   cloudflared tunnel create troot-api
+#   cloudflared tunnel route dns troot-api api.tattooroot.com
+#
+tunnel: troot-api
+credentials-file: /etc/cloudflared/troot-api.json
+
+ingress:
+  # 앱/관리자 공용 API
+  - hostname: api.tattooroot.com
+    service: http://api:4000
+    originRequest:
+      # 컨테이너 내부 통신이라 TLS 불필요
+      noTLSVerify: true
+      connectTimeout: 10s
+      # 대량 응답 스트리밍 시 버퍼링 방지
+      disableChunkedEncoding: false
+
+  # 관리자 패널(trootadmin) 을 같은 터널로 붙일 경우
+  # - hostname: admin.tattooroot.com
+  #   service: http://admin:80
+
+  # 위 규칙에 안 걸리면 404 — 반드시 마지막에 위치
+  - service: http_status:404

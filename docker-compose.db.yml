@@ -1,0 +1,56 @@
+# ── DB 서버 전용 ─────────────────────────────────────────────
+# Postgres(PostGIS) + Redis 만 띄운다. 백엔드 서버와 분리 운영.
+# 접근은 오직 백엔드 서버의 "사설 IP" 로만. 공개 포트(5432/6379)는
+# Lightsail 방화벽에서 절대 열지 말 것(기본 차단 상태 유지).
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: troot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-troot}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 를 .env 에 설정하세요}
+      POSTGRES_DB: ${DB_NAME:-troot}
+      LANG: ko_KR.utf8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # 최초 기동 시 PostGIS 등 확장 설치
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    # 0.0.0.0 바인딩 → 백엔드 박스가 사설망으로 접근 가능.
+    # 공개 노출은 Lightsail 방화벽(기본 차단)이 막는다.
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-troot} -d ${DB_NAME:-troot}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: troot-redis
+    restart: unless-stopped
+    # 헬스체크가 컨테이너 안에서 비밀번호를 참조할 수 있도록 주입
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD 를 .env 에 설정하세요}
+    # 박스 간 통신이라 반드시 비밀번호 설정
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD 를 .env 에 설정하세요}
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --appendonly no
+      --save ""
+    volumes:
+      - redis-data:/data
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:

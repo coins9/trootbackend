@@ -1,0 +1,23 @@
+# 빌드 컨텍스트에서 제외 — 이미지 용량·빌드시간 축소, 로컬 시크릿 유입 차단
+node_modules
+dist
+npm-debug.log*
+
+# 시크릿 — 절대 이미지에 넣지 않는다 (런타임엔 compose 의 env_file 로 주입)
+.env
+.env.*
+!.env.example
+
+# git / 에디터 / 문서
+.git
+.gitignore
+.idea
+.vscode
+*.md
+
+# 테스트 / 설정 (런타임 불필요)
+test
+**/*.spec.ts
+coverage
+.prettierrc
+eslint.config.mjs

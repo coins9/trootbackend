@@ -1,0 +1,40 @@
+# ── 백엔드 서버 전용 ─────────────────────────────────────────
+# API(NestJS) + Cloudflare Tunnel 만 띄운다.
+# DB/Redis 는 별도 DB 서버에 있고, .env 의 DB_HOST/REDIS_HOST 에
+# "DB 서버의 사설 IP" 를 넣어 접속한다.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: troot-api
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      NODE_ENV: production
+      # 원본 IP 가 CF 헤더로만 전달됨
+      BEHIND_CLOUDFLARE: 'true'
+    # cloudflared 를 통해서만 노출 — 호스트 포트 개방 안 함
+    expose:
+      - '4000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks: [troot-edge]
+
+  # api.tattooroot.com → 이 터널 → api:4000 (공인 IP·방화벽 개방 불필요)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: troot-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN 를 .env 에 설정하세요}
+    depends_on:
+      api: { condition: service_started }
+    networks: [troot-edge]
+
+networks:
+  troot-edge:
+    driver: bridge
