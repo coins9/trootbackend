@@ -131,7 +131,7 @@ export class ShopService {
   // ── 관리자 ────────────────────────────────────────────────
 
   async listForAdmin(
-    query: OffsetPaginationQuery & { category?: ShopPostCategory },
+    query: OffsetPaginationQuery & { category?: ShopPostCategory; keyword?: string },
   ): Promise<OffsetPage<ShopPost>> {
     const qb = this.posts
       .createQueryBuilder('p')
@@ -140,6 +140,7 @@ export class ShopService {
       .take(query.size);
 
     if (query.category) qb.andWhere('p.category = :category', { category: query.category });
+    if (query.keyword) qb.andWhere('p.title ILIKE :kw', { kw: `%${query.keyword}%` });
 
     const [items, total] = await qb.getManyAndCount();
     return { items, page: query.page, size: query.size, total, totalPages: Math.ceil(total / query.size) };
@@ -152,5 +153,12 @@ export class ShopService {
 
     post.status = ShopPostStatus.HIDDEN;
     return this.posts.save(post);
+  }
+
+  /** 운영자 강제 삭제 */
+  async deleteByAdmin(id: string): Promise<void> {
+    const post = await this.posts.findOne({ where: { id } });
+    if (!post) throw new AppException(ErrorCode.NOT_FOUND, { details: { id } });
+    await this.posts.remove(post);
   }
 }

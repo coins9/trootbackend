@@ -1,5 +1,5 @@
-import { Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
-import { IsEnum, IsOptional } from 'class-validator';
+import { Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { Roles } from '../../../shared/auth/guards';
 import { OffsetPaginationQuery } from '../../../shared/http/pagination.dto';
 import { UserRole } from '../../user/domain/user.entity';
@@ -8,6 +8,7 @@ import { ShopPostCategory } from '../domain/shop-post.entity';
 
 class AdminShopQuery extends OffsetPaginationQuery {
   @IsOptional() @IsEnum(ShopPostCategory) category?: ShopPostCategory;
+  @IsOptional() @IsString() keyword?: string;
 }
 
 @Controller('admin/shop-posts')
@@ -23,5 +24,11 @@ export class AdminShopController {
   @Patch(':id/hide')
   hide(@Param('id', ParseUUIDPipe) id: string) {
     return this.shopService.hideByAdmin(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.shopService.deleteByAdmin(id);
   }
 }

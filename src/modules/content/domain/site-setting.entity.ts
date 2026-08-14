@@ -28,6 +28,8 @@ export enum SettingKey {
   HOME_BANNER_TITLE = 'home_banner_title',
   HOME_BANNER_SUBTITLE = 'home_banner_subtitle',
   HOME_BANNER_URL = 'home_banner_url',
+  /** 홈 배너 이미지 URL (WebP 권장, 비우면 텍스트 배너로 폴백) */
+  HOME_BANNER_IMAGE = 'home_banner_image',
 }
 
 @Entity('site_settings')
@@ -60,4 +62,5 @@ export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   [SettingKey.HOME_BANNER_TITLE]: '',
   [SettingKey.HOME_BANNER_SUBTITLE]: '',
   [SettingKey.HOME_BANNER_URL]: '',
+  [SettingKey.HOME_BANNER_IMAGE]: '',
 };

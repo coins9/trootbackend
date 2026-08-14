@@ -47,6 +47,9 @@ class UpdateSettingsDto {
 
   @IsOptional() @IsString() @MaxLength(500)
   [SettingKey.HOME_BANNER_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.HOME_BANNER_IMAGE]?: string;
 }
 
 /** 앱·웹이 시작 시 읽어가는 공개 설정 */
