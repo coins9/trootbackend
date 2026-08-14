@@ -21,6 +21,9 @@ export interface PublicSettings {
   bannerBoothUrl: string;
   adInquiryUrl: string;
   partnerInquiryUrl: string;
+  homeBannerTitle: string;
+  homeBannerSubtitle: string;
+  homeBannerUrl: string;
 }
 
 const SETTINGS_CACHE_KEY = 'settings:public';
@@ -55,6 +58,9 @@ export class SettingService {
       bannerBoothUrl: map[SettingKey.BANNER_BOOTH_URL],
       adInquiryUrl: map[SettingKey.AD_INQUIRY_URL],
       partnerInquiryUrl: map[SettingKey.PARTNER_INQUIRY_URL],
+      homeBannerTitle: map[SettingKey.HOME_BANNER_TITLE],
+      homeBannerSubtitle: map[SettingKey.HOME_BANNER_SUBTITLE],
+      homeBannerUrl: map[SettingKey.HOME_BANNER_URL],
     };
   }
 

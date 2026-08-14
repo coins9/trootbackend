@@ -24,6 +24,10 @@ export enum SettingKey {
   /** 타투이스트 광고 문의 배너 링크 (AdStats 프로모 배너 2종) */
   AD_INQUIRY_URL = 'ad_inquiry_url',
   PARTNER_INQUIRY_URL = 'partner_inquiry_url',
+  /** 홈 상단 루트 배너 (비우면 기본 문구, URL 비우면 탭 무동작) */
+  HOME_BANNER_TITLE = 'home_banner_title',
+  HOME_BANNER_SUBTITLE = 'home_banner_subtitle',
+  HOME_BANNER_URL = 'home_banner_url',
 }
 
 @Entity('site_settings')
@@ -53,4 +57,7 @@ export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   // 비우면 앱 기본 폼(현재 Tally)로 폴백되므로 기본값은 빈 값으로 둔다
   [SettingKey.AD_INQUIRY_URL]: '',
   [SettingKey.PARTNER_INQUIRY_URL]: '',
+  [SettingKey.HOME_BANNER_TITLE]: '',
+  [SettingKey.HOME_BANNER_SUBTITLE]: '',
+  [SettingKey.HOME_BANNER_URL]: '',
 };

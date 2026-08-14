@@ -1,13 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { AppException } from '../../../shared/exceptions/app.exception';
 import { ErrorCode } from '../../../shared/exceptions/error-code';
 import { buildCursorPage } from '../../../shared/http/pagination.dto';
 import { ArtistService } from '../../artist/application/artist.service';
+import { User } from '../../user/domain/user.entity';
+import { ArtistPage } from '../../artist/domain/artist.entity';
 import {
   DepositStatus, Reservation, ReservationStatus,
 } from '../domain/reservation.entity';
+
+/** 타투이스트 예약함에 내려주는 뷰 — 누가 무엇을 언제 요청했는지 */
+export interface ArtistReservationView {
+  id: string;
+  status: ReservationStatus;
+  scheduledAt: string;
+  durationMinutes: number;
+  bodyPart: string | null;
+  sizePreset: string | null;
+  memo: string | null;
+  referenceImages: string[];
+  estimatedPriceKrw: number | null;
+  depositKrw: number;
+  depositStatus: DepositStatus;
+  artworkId: string | null;
+  createdAt: string;
+  customer: { id: string; nickname: string | null; profileImage: string | null } | null;
+}
 
 export interface CreateReservationCommand {
   customerId: string;
@@ -19,6 +39,27 @@ export interface CreateReservationCommand {
   sizePreset?: string;
   memo?: string;
   referenceImages?: string[];
+}
+
+/** 고객 예약 목록에 내려주는 뷰 — 어떤 타투이스트에게/언제/무슨 시술인지 */
+export interface CustomerReservationView {
+  id: string;
+  status: ReservationStatus;
+  scheduledAt: string;
+  durationMinutes: number;
+  bodyPart: string | null;
+  sizePreset: string | null;
+  depositKrw: number;
+  depositStatus: DepositStatus;
+  estimatedPriceKrw: number | null;
+  createdAt: string;
+  artist: {
+    id: string;
+    pageName: string;
+    profileImage: string | null;
+    regionSido: string | null;
+    regionSigungu: string | null;
+  } | null;
 }
 
 /** 상태 전이 규칙 — 허용되지 않은 전이는 서비스에서 차단한다 */
@@ -40,6 +81,8 @@ const ALLOWED_TRANSITIONS: Record<ReservationStatus, ReservationStatus[]> = {
 export class ReservationService {
   constructor(
     @InjectRepository(Reservation) private readonly reservations: Repository<Reservation>,
+    @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(ArtistPage) private readonly artists: Repository<ArtistPage>,
     private readonly artistService: ArtistService,
   ) {}
 
@@ -56,7 +99,7 @@ export class ReservationService {
     );
   }
 
-  /** 고객 목록 */
+  /** 고객 목록 (타투이스트 정보 조인) */
   async listForCustomer(customerId: string, cursor: string | undefined, limit: number) {
     const qb = this.reservations
       .createQueryBuilder('r')
@@ -67,13 +110,43 @@ export class ReservationService {
     if (cursor) qb.andWhere('r.scheduledAt < :cursor', { cursor: new Date(cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, limit, (r) => r.scheduledAt.toISOString());
+
+    const artistIds = [...new Set(rows.map((r) => r.artistPageId))];
+    const artists = artistIds.length
+      ? await this.artists.find({ where: { id: In(artistIds) } })
+      : [];
+    const artistMap = new Map(artists.map((a) => [a.id, a]));
+
+    const views: CustomerReservationView[] = rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      scheduledAt: r.scheduledAt.toISOString(),
+      durationMinutes: r.durationMinutes,
+      bodyPart: r.bodyPart,
+      sizePreset: r.sizePreset,
+      depositKrw: r.depositKrw,
+      depositStatus: r.depositStatus,
+      estimatedPriceKrw: r.estimatedPriceKrw,
+      createdAt: r.createdAt.toISOString(),
+      artist: artistMap.has(r.artistPageId)
+        ? {
+            id: r.artistPageId,
+            pageName: artistMap.get(r.artistPageId)!.pageName,
+            profileImage: artistMap.get(r.artistPageId)!.profileImage,
+            regionSido: artistMap.get(r.artistPageId)!.regionSido,
+            regionSigungu: artistMap.get(r.artistPageId)!.regionSigungu,
+          }
+        : null,
+    }));
+
+    return buildCursorPage(views, limit, (v) => v.scheduledAt);
   }
 
-  /** 타투이스트 예약 목록 (상태 필터) */
+  /** 타투이스트 예약 목록 (상태/예약금 상태 필터) */
   async listForArtist(
     userId: string,
     status: ReservationStatus | undefined,
+    depositStatus: DepositStatus | undefined,
     cursor: string | undefined,
     limit: number,
   ) {
@@ -85,10 +158,42 @@ export class ReservationService {
       .take(limit + 1);
 
     if (status) qb.andWhere('r.status = :status', { status });
+    if (depositStatus) qb.andWhere('r.depositStatus = :depositStatus', { depositStatus });
     if (cursor) qb.andWhere('r.scheduledAt < :cursor', { cursor: new Date(cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, limit, (r) => r.scheduledAt.toISOString());
+
+    // 고객(요청자) 정보 조인 — 한 번의 조회로 매핑
+    const customerIds = [...new Set(rows.map((r) => r.customerId))];
+    const users = customerIds.length
+      ? await this.users.find({ where: { id: In(customerIds) } })
+      : [];
+    const userMap = new Map(users.map((u) => [u.id, u]));
+
+    const views: ArtistReservationView[] = rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      scheduledAt: r.scheduledAt.toISOString(),
+      durationMinutes: r.durationMinutes,
+      bodyPart: r.bodyPart,
+      sizePreset: r.sizePreset,
+      memo: r.memo,
+      referenceImages: r.referenceImages,
+      estimatedPriceKrw: r.estimatedPriceKrw,
+      depositKrw: r.depositKrw,
+      depositStatus: r.depositStatus,
+      artworkId: r.artworkId,
+      createdAt: r.createdAt.toISOString(),
+      customer: userMap.has(r.customerId)
+        ? {
+            id: r.customerId,
+            nickname: userMap.get(r.customerId)!.nickname,
+            profileImage: userMap.get(r.customerId)!.profileImage,
+          }
+        : null,
+    }));
+
+    return buildCursorPage(views, limit, (v) => v.scheduledAt);
   }
 
   /** 캘린더 — 월 단위 조회 */
@@ -194,15 +299,44 @@ export class ReservationService {
   }
 
   /** 리뷰 작성 가능한 완료 예약 */
-  async listReviewable(customerId: string): Promise<Reservation[]> {
+  async listReviewable(customerId: string) {
     const since = new Date(Date.now() - 14 * 86_400_000);
-    return this.reservations.find({
+    const rows = await this.reservations.find({
       where: {
         customerId,
         status: ReservationStatus.COMPLETED,
         updatedAt: Between(since, new Date()),
       },
       order: { updatedAt: 'DESC' },
+    });
+
+    // 작가 요약 조인 — 리뷰 작성 카드에 작가 정보 표시
+    const artistIds = [...new Set(rows.map((r) => r.artistPageId))];
+    const artists = artistIds.length
+      ? await this.artists.find({ where: { id: In(artistIds) } })
+      : [];
+    const artistMap = new Map(artists.map((a) => [a.id, a]));
+
+    return rows.map((r) => {
+      const a = artistMap.get(r.artistPageId);
+      return {
+        id: r.id,
+        artistPageId: r.artistPageId,
+        artworkId: r.artworkId,
+        scheduledAt: r.scheduledAt.toISOString(),
+        bodyPart: r.bodyPart,
+        sizePreset: r.sizePreset,
+        updatedAt: r.updatedAt.toISOString(),
+        artist: a
+          ? {
+              id: a.id,
+              pageName: a.pageName,
+              profileImage: a.profileImage,
+              regionSido: a.regionSido,
+              regionSigungu: a.regionSigungu,
+            }
+          : null,
+      };
     });
   }
 }

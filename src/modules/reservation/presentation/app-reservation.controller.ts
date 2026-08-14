@@ -9,7 +9,7 @@ import { CurrentUser, Roles } from '../../../shared/auth/guards';
 import { CursorPaginationQuery } from '../../../shared/http/pagination.dto';
 import { UserRole } from '../../user/domain/user.entity';
 import { ReservationService } from '../application/reservation.service';
-import { ReservationStatus } from '../domain/reservation.entity';
+import { DepositStatus, ReservationStatus } from '../domain/reservation.entity';
 
 class CreateReservationDto {
   @IsUUID() artistPageId: string;
@@ -33,6 +33,7 @@ class DepositDto {
 
 class ArtistListQuery extends CursorPaginationQuery {
   @IsOptional() @IsEnum(ReservationStatus) status?: ReservationStatus;
+  @IsOptional() @IsEnum(DepositStatus) depositStatus?: DepositStatus;
 }
 
 class ScheduleQuery {
@@ -63,7 +64,9 @@ export class AppReservationController {
   @Get('artist')
   @Roles(UserRole.TATTOOIST, UserRole.ADMIN)
   forArtist(@CurrentUser('id') userId: string, @Query() query: ArtistListQuery) {
-    return this.reservationService.listForArtist(userId, query.status, query.cursor, query.limit);
+    return this.reservationService.listForArtist(
+      userId, query.status, query.depositStatus, query.cursor, query.limit,
+    );
   }
 
   @Get('artist/schedule')

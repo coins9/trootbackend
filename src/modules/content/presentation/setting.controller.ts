@@ -38,6 +38,15 @@ class UpdateSettingsDto {
 
   @IsOptional() @IsString() @MaxLength(500)
   [SettingKey.PARTNER_INQUIRY_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(60)
+  [SettingKey.HOME_BANNER_TITLE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(100)
+  [SettingKey.HOME_BANNER_SUBTITLE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.HOME_BANNER_URL]?: string;
 }
 
 /** 앱·웹이 시작 시 읽어가는 공개 설정 */

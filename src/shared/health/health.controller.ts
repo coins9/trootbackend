@@ -1,10 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Public } from '../auth/guards';
 import { CacheService } from '../cache/cache.service';
 
-@Controller('health')
+// 버전 경로(v1) 밖에서 /health 로 응답해야 컨테이너 헬스체크가 맞는다
+@Controller({ path: 'health', version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,

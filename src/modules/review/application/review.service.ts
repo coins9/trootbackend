@@ -1,12 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AppException } from '../../../shared/exceptions/app.exception';
 import { ErrorCode } from '../../../shared/exceptions/error-code';
 import { buildCursorPage } from '../../../shared/http/pagination.dto';
 import { ArtistService } from '../../artist/application/artist.service';
+import { ArtistPage } from '../../artist/domain/artist.entity';
 import { Reservation, ReservationStatus } from '../../reservation/domain/reservation.entity';
+import { User } from '../../user/domain/user.entity';
 import { Review } from '../domain/review.entity';
+
+/** 카드 렌더용 작가 요약 */
+export interface ArtistMini {
+  id: string;
+  pageName: string;
+  profileImage: string | null;
+  regionSido: string | null;
+  regionSigungu: string | null;
+}
 
 export interface CreateReviewCommand {
   authorId: string;
@@ -24,9 +35,30 @@ export class ReviewService {
   constructor(
     @InjectRepository(Review) private readonly reviews: Repository<Review>,
     @InjectRepository(Reservation) private readonly reservations: Repository<Reservation>,
+    @InjectRepository(ArtistPage) private readonly artists: Repository<ArtistPage>,
+    @InjectRepository(User) private readonly users: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly artistService: ArtistService,
   ) {}
+
+  /** 여러 작가의 요약 정보를 한 번에 조회 */
+  private async loadArtistMinis(ids: string[]): Promise<Map<string, ArtistMini>> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return new Map();
+    const rows = await this.artists.find({ where: { id: In(unique) } });
+    return new Map(
+      rows.map((a) => [
+        a.id,
+        {
+          id: a.id,
+          pageName: a.pageName,
+          profileImage: a.profileImage,
+          regionSido: a.regionSido,
+          regionSigungu: a.regionSigungu,
+        },
+      ]),
+    );
+  }
 
   /**
    * 리뷰 작성.
@@ -111,7 +143,19 @@ export class ReviewService {
     if (cursor) qb.andWhere('r.createdAt < :cursor', { cursor: new Date(cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+    const page = buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+
+    const authorIds = [...new Set(page.items.map((r) => r.authorId))];
+    const customers = authorIds.length
+      ? await this.users.find({ where: { id: In(authorIds) } })
+      : [];
+    const customerMap = new Map(customers.map((u) => [u.id, u]));
+
+    const items = page.items.map((r) => ({
+      ...r,
+      customerNickname: customerMap.get(r.authorId)?.nickname ?? null,
+    }));
+    return { ...page, items };
   }
 
   async listMine(authorId: string, cursor: string | undefined, limit: number) {
@@ -124,7 +168,11 @@ export class ReviewService {
     if (cursor) qb.andWhere('r.createdAt < :cursor', { cursor: new Date(cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+    const page = buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+
+    const artistMap = await this.loadArtistMinis(page.items.map((r) => r.artistPageId));
+    const items = page.items.map((r) => ({ ...r, artist: artistMap.get(r.artistPageId) ?? null }));
+    return { ...page, items };
   }
 
   /** 항목별 평균 — 타투이스트 상세 상단에 노출 */

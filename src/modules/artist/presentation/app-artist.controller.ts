@@ -42,6 +42,7 @@ class UpdateArtistPageDto {
   @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
   @IsOptional() @IsArray() genres?: string[];
+  @IsOptional() @IsArray() tags?: string[];
 }
 
 class ArtworkDto {

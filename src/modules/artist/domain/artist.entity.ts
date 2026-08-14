@@ -67,6 +67,10 @@ export class ArtistPage extends BaseEntity {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   genres: string[];
 
+  /** 편의/특성 태그 (same_day, open_24h, parking, female_artist, male_artist) */
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  tags: string[];
+
   // 집계 컬럼 — 리뷰/작품 테이블 조인 없이 목록을 렌더링하기 위한 비정규화
   @Column({ type: 'numeric', precision: 3, scale: 2, default: 0 })
   rating: string;

@@ -172,11 +172,13 @@ export class ArtistService {
 
   /** 홈 피드 — 게시된 작품 전체 */
   async feed(cursor: string | undefined, limit: number, sort: 'recent' | 'popular' = 'recent') {
+    // 다대일(artist) 조인만 있어 행이 늘지 않으므로 limit() 로 직접 제한한다.
+    // take() 는 조인+원시식(COALESCE) orderBy 와 함께 별칭 조회 버그를 유발한다.
     const qb = this.artworks
       .createQueryBuilder('w')
       .leftJoinAndSelect('w.artist', 'a')
       .where('w.status = :status', { status: ArtworkStatus.PUBLISHED })
-      .take(limit + 1);
+      .limit(limit + 1);
 
     if (sort === 'popular') {
       qb.orderBy('w.likeCount', 'DESC').addOrderBy('w.createdAt', 'DESC');
