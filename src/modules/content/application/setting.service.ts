@@ -12,6 +12,7 @@ export type SettingMap = Record<SettingKey, string>;
 export interface PublicSettings {
   kakaoChannelUrl: string;
   kakaoChannelId: string;
+  kakaoOpenChatUrl: string;
   supportEmail: string;
   supportHours: string;
   noticeBanner: string;
@@ -24,6 +25,15 @@ export interface PublicSettings {
   homeBannerTitle: string;
   homeBannerSubtitle: string;
   homeBannerUrl: string;
+  homeBannerImage: string;
+  shopBoothBannerImage: string;
+  shopBoothBannerUrl: string;
+  shopModelBannerImage: string;
+  shopModelBannerUrl: string;
+  shopMediaBannerImage: string;
+  shopMediaBannerUrl: string;
+  suppliesBannerImage: string;
+  suppliesBannerUrl: string;
 }
 
 const SETTINGS_CACHE_KEY = 'settings:public';
@@ -49,6 +59,7 @@ export class SettingService {
     return {
       kakaoChannelUrl: map[SettingKey.KAKAO_CHANNEL_URL],
       kakaoChannelId: map[SettingKey.KAKAO_CHANNEL_ID],
+      kakaoOpenChatUrl: map[SettingKey.KAKAO_OPENCHAT_URL],
       supportEmail: map[SettingKey.SUPPORT_EMAIL],
       supportHours: map[SettingKey.SUPPORT_HOURS],
       noticeBanner: map[SettingKey.NOTICE_BANNER],
@@ -61,6 +72,15 @@ export class SettingService {
       homeBannerTitle: map[SettingKey.HOME_BANNER_TITLE],
       homeBannerSubtitle: map[SettingKey.HOME_BANNER_SUBTITLE],
       homeBannerUrl: map[SettingKey.HOME_BANNER_URL],
+      homeBannerImage: map[SettingKey.HOME_BANNER_IMAGE],
+      shopBoothBannerImage: map[SettingKey.SHOP_BOOTH_BANNER_IMAGE],
+      shopBoothBannerUrl: map[SettingKey.SHOP_BOOTH_BANNER_URL],
+      shopModelBannerImage: map[SettingKey.SHOP_MODEL_BANNER_IMAGE],
+      shopModelBannerUrl: map[SettingKey.SHOP_MODEL_BANNER_URL],
+      shopMediaBannerImage: map[SettingKey.SHOP_MEDIA_BANNER_IMAGE],
+      shopMediaBannerUrl: map[SettingKey.SHOP_MEDIA_BANNER_URL],
+      suppliesBannerImage: map[SettingKey.SUPPLIES_BANNER_IMAGE],
+      suppliesBannerUrl: map[SettingKey.SUPPLIES_BANNER_URL],
     };
   }
 

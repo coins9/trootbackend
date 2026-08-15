@@ -7,7 +7,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import {
   buildCursorPage, type CursorPage, type OffsetPage, type OffsetPaginationQuery,
 } from '../../../shared/http/pagination.dto';
-import { UserRole } from '../../user/domain/user.entity';
+import { User, UserRole } from '../../user/domain/user.entity';
 import { ArtistPage, ArtistTier } from '../domain/artist.entity';
 import { Artwork, ArtworkStatus } from '../domain/artwork.entity';
 
@@ -32,6 +32,7 @@ export class ArtistService {
   constructor(
     @InjectRepository(ArtistPage) private readonly artists: Repository<ArtistPage>,
     @InjectRepository(Artwork) private readonly artworks: Repository<Artwork>,
+    @InjectRepository(User) private readonly users: Repository<User>,
     private readonly cache: CacheService,
   ) {}
 
@@ -100,7 +101,7 @@ export class ArtistService {
     return artist;
   }
 
-  /** 타투이스트 등록 — 1인 1페이지 */
+  /** 타투이스트 등록 — 1인 1페이지. 유저에게 TATTOOIST 역할도 부여한다. */
   async createPage(
     userId: string,
     input: { pageName: string; handle: string; bio?: string; regionSido?: string; regionSigungu?: string },
@@ -116,9 +117,20 @@ export class ArtistService {
       throw new AppException(ErrorCode.ARTIST_ALREADY_EXISTS, { details: { handle: input.handle } });
     }
 
-    return this.artists.save(
+    const page = await this.artists.save(
       this.artists.create({ userId, ...input, tier: ArtistTier.GENERAL }),
     );
+
+    // 아티스트 페이지 생성 = 타투이스트 확정 → 역할 부여 후 인증 캐시 무효화
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (user && !user.roles.includes(UserRole.TATTOOIST)) {
+      user.roles = Array.from(new Set([...user.roles, UserRole.TATTOOIST]));
+      user.activeRole = UserRole.TATTOOIST;
+      await this.users.save(user);
+      await this.cache.del(CacheKey.userProfile(userId), `auth:user:${userId}`);
+    }
+
+    return page;
   }
 
   async updatePage(userId: string, patch: Partial<ArtistPage>): Promise<ArtistPage> {

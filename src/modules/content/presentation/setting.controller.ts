@@ -50,6 +50,33 @@ class UpdateSettingsDto {
 
   @IsOptional() @IsString() @MaxLength(500)
   [SettingKey.HOME_BANNER_IMAGE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.KAKAO_OPENCHAT_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_BOOTH_BANNER_IMAGE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_BOOTH_BANNER_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_MODEL_BANNER_IMAGE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_MODEL_BANNER_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_MEDIA_BANNER_IMAGE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SHOP_MEDIA_BANNER_URL]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SUPPLIES_BANNER_IMAGE]?: string;
+
+  @IsOptional() @IsString() @MaxLength(500)
+  [SettingKey.SUPPLIES_BANNER_URL]?: string;
 }
 
 /** 앱·웹이 시작 시 읽어가는 공개 설정 */

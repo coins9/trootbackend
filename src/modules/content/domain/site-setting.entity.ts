@@ -10,6 +10,8 @@ export enum SettingKey {
   KAKAO_CHANNEL_URL = 'kakao_channel_url',
   /** 채널 공개 ID (_xxxxx) — 앱에서 채널 추가/1:1 채팅 딥링크에 사용 */
   KAKAO_CHANNEL_ID = 'kakao_channel_id',
+  /** 오픈채팅방 URL — 채널과 별개 */
+  KAKAO_OPENCHAT_URL = 'kakao_openchat_url',
   /** 문의 이메일 */
   SUPPORT_EMAIL = 'support_email',
   /** 고객센터 운영시간 안내 문구 */
@@ -30,6 +32,16 @@ export enum SettingKey {
   HOME_BANNER_URL = 'home_banner_url',
   /** 홈 배너 이미지 URL (WebP 권장, 비우면 텍스트 배너로 폴백) */
   HOME_BANNER_IMAGE = 'home_banner_image',
+  /** 샵&매칭 탭별 배너 (부스·모델·미디어) */
+  SHOP_BOOTH_BANNER_IMAGE = 'shop_booth_banner_image',
+  SHOP_BOOTH_BANNER_URL = 'shop_booth_banner_url',
+  SHOP_MODEL_BANNER_IMAGE = 'shop_model_banner_image',
+  SHOP_MODEL_BANNER_URL = 'shop_model_banner_url',
+  SHOP_MEDIA_BANNER_IMAGE = 'shop_media_banner_image',
+  SHOP_MEDIA_BANNER_URL = 'shop_media_banner_url',
+  /** 용품샵 배너 */
+  SUPPLIES_BANNER_IMAGE = 'supplies_banner_image',
+  SUPPLIES_BANNER_URL = 'supplies_banner_url',
 }
 
 @Entity('site_settings')
@@ -49,6 +61,7 @@ export class SiteSetting extends BaseEntity {
 export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   [SettingKey.KAKAO_CHANNEL_URL]: '',
   [SettingKey.KAKAO_CHANNEL_ID]: '',
+  [SettingKey.KAKAO_OPENCHAT_URL]: '',
   [SettingKey.SUPPORT_EMAIL]: 'contact@tattooroot.com',
   [SettingKey.SUPPORT_HOURS]: '평일 10:00 ~ 18:00 (주말 · 공휴일 휴무)',
   [SettingKey.NOTICE_BANNER]: '',
@@ -63,4 +76,12 @@ export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   [SettingKey.HOME_BANNER_SUBTITLE]: '',
   [SettingKey.HOME_BANNER_URL]: '',
   [SettingKey.HOME_BANNER_IMAGE]: '',
+  [SettingKey.SHOP_BOOTH_BANNER_IMAGE]: '',
+  [SettingKey.SHOP_BOOTH_BANNER_URL]: '',
+  [SettingKey.SHOP_MODEL_BANNER_IMAGE]: '',
+  [SettingKey.SHOP_MODEL_BANNER_URL]: '',
+  [SettingKey.SHOP_MEDIA_BANNER_IMAGE]: '',
+  [SettingKey.SHOP_MEDIA_BANNER_URL]: '',
+  [SettingKey.SUPPLIES_BANNER_IMAGE]: '',
+  [SettingKey.SUPPLIES_BANNER_URL]: '',
 };
