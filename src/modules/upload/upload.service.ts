@@ -140,4 +140,10 @@ export class UploadService {
     if (!publicUrl.startsWith(this.publicBaseUrl)) return null;
     return publicUrl.slice(this.publicBaseUrl.length + 1);
   }
+
+  /** publicUrl 로 R2 오브젝트 삭제. 자신의 CDN URL 이 아니면 무동작 */
+  async deleteByUrl(publicUrl: string): Promise<void> {
+    const key = this.extractKey(publicUrl);
+    if (key) await this.delete(key);
+  }
 }

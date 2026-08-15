@@ -1,7 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsString, IsUrl, Max, Min } from 'class-validator';
 import { CurrentUser } from '../../shared/auth/guards';
 import { UploadService } from './upload.service';
 import type { UploadScope } from './upload.service';
@@ -20,6 +20,12 @@ class PresignDto {
   size: number;
 }
 
+class DeleteUploadDto {
+  @IsString()
+  @IsUrl()
+  url: string;
+}
+
 @Controller('app/uploads')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
@@ -32,5 +38,18 @@ export class UploadController {
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   presign(@CurrentUser('id') userId: string, @Body() dto: PresignDto) {
     return this.uploadService.presign({ ...dto, userId });
+  }
+
+  /**
+   * 업로드된 이미지 삭제.
+   * 자신의 CDN 도메인 URL 이 아니면 서비스가 조용히 무시한다.
+   */
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUpload(
+    @CurrentUser('id') _userId: string,
+    @Body() dto: DeleteUploadDto,
+  ): Promise<void> {
+    await this.uploadService.deleteByUrl(dto.url);
   }
 }
