@@ -81,9 +81,9 @@ export class AppArtistController {
     return this.artistService.feed(query.cursor, query.limit, query.sort);
   }
 
-  /** 내 타투이스트 페이지 — :id 보다 먼저 선언해야 라우팅이 겹치지 않는다 */
+  /** 내 타투이스트 페이지 — :id 보다 먼저 선언해야 라우팅이 겹치지 않는다.
+   *  역할 미분리: 일반 유저도 자신의 페이지 유무를 확인해야 하므로 인증만 요구한다. */
   @Get('me')
-  @Roles(UserRole.TATTOOIST, UserRole.ADMIN)
   me(@CurrentUser('id') userId: string) {
     return this.artistService.getByUserId(userId);
   }
@@ -107,7 +107,6 @@ export class AppArtistController {
   }
 
   @Get('me/artworks')
-  @Roles(UserRole.TATTOOIST, UserRole.ADMIN)
   async myArtworks(@CurrentUser('id') userId: string, @Query() query: CursorPaginationQuery) {
     const artist = await this.artistService.getByUserId(userId);
     return this.artistService.listArtworks(artist.id, query.cursor, query.limit);
