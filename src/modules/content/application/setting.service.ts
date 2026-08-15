@@ -8,6 +8,11 @@ import {
 
 export type SettingMap = Record<SettingKey, string>;
 
+export interface BannerImageItem {
+  imageUrl: string;
+  linkUrl: string;
+}
+
 /** 앱·웹에 내려줄 공개 설정 묶음 */
 export interface PublicSettings {
   kakaoChannelUrl: string;
@@ -34,9 +39,29 @@ export interface PublicSettings {
   shopMediaBannerUrl: string;
   suppliesBannerImage: string;
   suppliesBannerUrl: string;
+  bannerBeginnerImages: BannerImageItem[];
+  bannerSupplyImages: BannerImageItem[];
+  bannerBoothImages: BannerImageItem[];
+  bannerMediaImages: BannerImageItem[];
+  bannerAdImages: BannerImageItem[];
+  bannerPartnerImages: BannerImageItem[];
 }
 
 const SETTINGS_CACHE_KEY = 'settings:public';
+
+function parseBannerImages(raw: string): BannerImageItem[] {
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(
+      (item): item is BannerImageItem =>
+        typeof item === 'object' && item !== null &&
+        typeof item.imageUrl === 'string' && typeof item.linkUrl === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
 
 @Injectable()
 export class SettingService {
@@ -81,6 +106,12 @@ export class SettingService {
       shopMediaBannerUrl: map[SettingKey.SHOP_MEDIA_BANNER_URL],
       suppliesBannerImage: map[SettingKey.SUPPLIES_BANNER_IMAGE],
       suppliesBannerUrl: map[SettingKey.SUPPLIES_BANNER_URL],
+      bannerBeginnerImages: parseBannerImages(map[SettingKey.BANNER_BEGINNER_IMAGES]),
+      bannerSupplyImages: parseBannerImages(map[SettingKey.BANNER_SUPPLY_IMAGES]),
+      bannerBoothImages: parseBannerImages(map[SettingKey.BANNER_BOOTH_IMAGES]),
+      bannerMediaImages: parseBannerImages(map[SettingKey.BANNER_MEDIA_IMAGES]),
+      bannerAdImages: parseBannerImages(map[SettingKey.BANNER_AD_IMAGES]),
+      bannerPartnerImages: parseBannerImages(map[SettingKey.BANNER_PARTNER_IMAGES]),
     };
   }
 

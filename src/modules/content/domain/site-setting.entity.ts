@@ -42,6 +42,13 @@ export enum SettingKey {
   /** 용품샵 배너 */
   SUPPLIES_BANNER_IMAGE = 'supplies_banner_image',
   SUPPLIES_BANNER_URL = 'supplies_banner_url',
+  /** 배너 이미지 슬롯 — JSON 배열 [{imageUrl,linkUrl},...] 로 저장 */
+  BANNER_BEGINNER_IMAGES = 'banner_beginner_images',
+  BANNER_SUPPLY_IMAGES = 'banner_supply_images',
+  BANNER_BOOTH_IMAGES = 'banner_booth_images',
+  BANNER_MEDIA_IMAGES = 'banner_media_images',
+  BANNER_AD_IMAGES = 'banner_ad_images',
+  BANNER_PARTNER_IMAGES = 'banner_partner_images',
 }
 
 @Entity('site_settings')
@@ -84,4 +91,10 @@ export const SETTING_DEFAULTS: Record<SettingKey, string> = {
   [SettingKey.SHOP_MEDIA_BANNER_URL]: '',
   [SettingKey.SUPPLIES_BANNER_IMAGE]: '',
   [SettingKey.SUPPLIES_BANNER_URL]: '',
+  [SettingKey.BANNER_BEGINNER_IMAGES]: '[]',
+  [SettingKey.BANNER_SUPPLY_IMAGES]: '[]',
+  [SettingKey.BANNER_BOOTH_IMAGES]: '[]',
+  [SettingKey.BANNER_MEDIA_IMAGES]: '[]',
+  [SettingKey.BANNER_AD_IMAGES]: '[]',
+  [SettingKey.BANNER_PARTNER_IMAGES]: '[]',
 };

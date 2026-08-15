@@ -77,6 +77,25 @@ class UpdateSettingsDto {
 
   @IsOptional() @IsString() @MaxLength(500)
   [SettingKey.SUPPLIES_BANNER_URL]?: string;
+
+  // 배너 이미지 슬롯 — JSON 배열 문자열로 전달
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_BEGINNER_IMAGES]?: string;
+
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_SUPPLY_IMAGES]?: string;
+
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_BOOTH_IMAGES]?: string;
+
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_MEDIA_IMAGES]?: string;
+
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_AD_IMAGES]?: string;
+
+  @IsOptional() @IsString()
+  [SettingKey.BANNER_PARTNER_IMAGES]?: string;
 }
 
 /** 앱·웹이 시작 시 읽어가는 공개 설정 */
