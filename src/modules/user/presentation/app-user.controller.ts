@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
 import { IsEnum, IsString, Length } from 'class-validator';
 import { AllowUnonboarded, CurrentUser } from '../../../shared/auth/guards';
 import { UserRole } from '../domain/user.entity';
@@ -70,5 +70,11 @@ export class AppUserController {
   @Patch('me/role')
   switchRole(@CurrentUser('id') userId: string, @Body() dto: SwitchRoleDto) {
     return this.userService.switchRole(userId, dto.role);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  withdraw(@CurrentUser('id') userId: string) {
+    return this.userService.withdraw(userId);
   }
 }

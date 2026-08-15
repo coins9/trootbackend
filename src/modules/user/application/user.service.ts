@@ -102,6 +102,13 @@ export class UserService {
     return this.getProfile(userId);
   }
 
+  async withdraw(userId: string): Promise<void> {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new AppException(ErrorCode.USER_NOT_FOUND);
+    await this.invalidate(userId);
+    await this.users.remove(user);
+  }
+
   async isNicknameAvailable(nickname: string): Promise<boolean> {
     if (!NICKNAME_PATTERN.test(nickname)) return false;
     if (RESERVED_NICKNAMES.has(nickname.toLowerCase())) return false;
