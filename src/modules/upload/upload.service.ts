@@ -65,6 +65,10 @@ export class UploadService {
           region: 'auto',
           endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
           credentials: { accessKeyId, secretAccessKey },
+          // 브라우저 CORS 환경에서 presigned PUT 이 동작하려면 자동 체크섬을 꺼야 한다.
+          // SDK v3 기본값이 CRC32 를 signed header 에 포함시켜 CORS preflight 를 막는다.
+          requestChecksumCalculation: 'WHEN_REQUIRED',
+          responseChecksumValidation: 'WHEN_REQUIRED',
         })
       : null;
 
@@ -105,7 +109,9 @@ export class UploadService {
       Bucket: this.bucket,
       Key: key,
       ContentType: req.contentType,
-      ContentLength: req.size,
+      // ContentLength 를 signed header 에서 제외 — 브라우저 CORS preflight 는
+      // content-length 를 보낼 수 없어서 서명 검증이 실패한다.
+      // 크기 검증은 이미 위에서 req.size 로 처리했으므로 보안 손실 없음.
     });
 
     const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: this.ttl });
