@@ -39,12 +39,19 @@ export interface PublicSettings {
   shopMediaBannerUrl: string;
   suppliesBannerImage: string;
   suppliesBannerUrl: string;
-  bannerBeginnerImages: BannerImageItem[];
-  bannerSupplyImages: BannerImageItem[];
-  bannerBoothImages: BannerImageItem[];
-  bannerMediaImages: BannerImageItem[];
-  bannerAdImages: BannerImageItem[];
-  bannerPartnerImages: BannerImageItem[];
+  /** 언어별 배너 슬롯 — 앱은 현재 언어에 맞는 필드를 사용한다 */
+  bannerBeginnerImagesKo: BannerImageItem[];
+  bannerBeginnerImagesEn: BannerImageItem[];
+  bannerSupplyImagesKo: BannerImageItem[];
+  bannerSupplyImagesEn: BannerImageItem[];
+  bannerBoothImagesKo: BannerImageItem[];
+  bannerBoothImagesEn: BannerImageItem[];
+  bannerMediaImagesKo: BannerImageItem[];
+  bannerMediaImagesEn: BannerImageItem[];
+  bannerAdImagesKo: BannerImageItem[];
+  bannerAdImagesEn: BannerImageItem[];
+  bannerPartnerImagesKo: BannerImageItem[];
+  bannerPartnerImagesEn: BannerImageItem[];
 }
 
 const SETTINGS_CACHE_KEY = 'settings:public';
@@ -106,12 +113,18 @@ export class SettingService {
       shopMediaBannerUrl: map[SettingKey.SHOP_MEDIA_BANNER_URL],
       suppliesBannerImage: map[SettingKey.SUPPLIES_BANNER_IMAGE],
       suppliesBannerUrl: map[SettingKey.SUPPLIES_BANNER_URL],
-      bannerBeginnerImages: parseBannerImages(map[SettingKey.BANNER_BEGINNER_IMAGES]),
-      bannerSupplyImages: parseBannerImages(map[SettingKey.BANNER_SUPPLY_IMAGES]),
-      bannerBoothImages: parseBannerImages(map[SettingKey.BANNER_BOOTH_IMAGES]),
-      bannerMediaImages: parseBannerImages(map[SettingKey.BANNER_MEDIA_IMAGES]),
-      bannerAdImages: parseBannerImages(map[SettingKey.BANNER_AD_IMAGES]),
-      bannerPartnerImages: parseBannerImages(map[SettingKey.BANNER_PARTNER_IMAGES]),
+      bannerBeginnerImagesKo: parseBannerImages(map[SettingKey.BANNER_BEGINNER_IMAGES_KO]),
+      bannerBeginnerImagesEn: parseBannerImages(map[SettingKey.BANNER_BEGINNER_IMAGES_EN]),
+      bannerSupplyImagesKo:   parseBannerImages(map[SettingKey.BANNER_SUPPLY_IMAGES_KO]),
+      bannerSupplyImagesEn:   parseBannerImages(map[SettingKey.BANNER_SUPPLY_IMAGES_EN]),
+      bannerBoothImagesKo:    parseBannerImages(map[SettingKey.BANNER_BOOTH_IMAGES_KO]),
+      bannerBoothImagesEn:    parseBannerImages(map[SettingKey.BANNER_BOOTH_IMAGES_EN]),
+      bannerMediaImagesKo:    parseBannerImages(map[SettingKey.BANNER_MEDIA_IMAGES_KO]),
+      bannerMediaImagesEn:    parseBannerImages(map[SettingKey.BANNER_MEDIA_IMAGES_EN]),
+      bannerAdImagesKo:       parseBannerImages(map[SettingKey.BANNER_AD_IMAGES_KO]),
+      bannerAdImagesEn:       parseBannerImages(map[SettingKey.BANNER_AD_IMAGES_EN]),
+      bannerPartnerImagesKo:  parseBannerImages(map[SettingKey.BANNER_PARTNER_IMAGES_KO]),
+      bannerPartnerImagesEn:  parseBannerImages(map[SettingKey.BANNER_PARTNER_IMAGES_EN]),
     };
   }
 
