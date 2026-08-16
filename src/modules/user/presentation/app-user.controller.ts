@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
-import { IsEnum, IsString, Length } from 'class-validator';
+import { IsEnum, IsString, Length, MaxLength } from 'class-validator';
 import { AllowUnonboarded, CurrentUser } from '../../../shared/auth/guards';
 import { UserRole } from '../domain/user.entity';
 import { UserService } from '../application/user.service';
@@ -30,6 +30,15 @@ class LanguageDto {
 class SwitchRoleDto {
   @IsEnum(UserRole)
   role: UserRole;
+}
+
+class FcmTokenDto {
+  @IsString()
+  @MaxLength(500)
+  fcmToken: string;
+
+  @IsEnum(['ios', 'android'])
+  platform: 'ios' | 'android';
 }
 
 @Controller('app/users')
@@ -70,6 +79,13 @@ export class AppUserController {
   @Patch('me/role')
   switchRole(@CurrentUser('id') userId: string, @Body() dto: SwitchRoleDto) {
     return this.userService.switchRole(userId, dto.role);
+  }
+
+  @Patch('me/fcm-token')
+  @AllowUnonboarded()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateFcmToken(@CurrentUser('id') userId: string, @Body() dto: FcmTokenDto) {
+    await this.userService.updateFcmToken(userId, dto.fcmToken, dto.platform);
   }
 
   @Delete('me')

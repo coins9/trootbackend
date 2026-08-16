@@ -102,6 +102,10 @@ export class UserService {
     return this.getProfile(userId);
   }
 
+  async updateFcmToken(userId: string, fcmToken: string, platform: 'ios' | 'android'): Promise<void> {
+    await this.users.update(userId, { fcmToken, fcmPlatform: platform });
+  }
+
   async withdraw(userId: string): Promise<void> {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new AppException(ErrorCode.USER_NOT_FOUND);

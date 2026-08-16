@@ -66,6 +66,12 @@ export class User extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   lastLoginAt: Date | null;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  fcmToken: string | null;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  fcmPlatform: 'ios' | 'android' | null;
+
   isActive(): boolean {
     return this.status === UserStatus.ACTIVE;
   }

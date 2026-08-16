@@ -21,6 +21,7 @@ import {
   JwtAuthGuard, OnboardingGuard, RolesGuard,
 } from './shared/auth/guards';
 import { CacheModule } from './shared/cache/cache.module';
+import { FirebaseModule } from './shared/firebase/firebase.module';
 import { AllExceptionsFilter } from './shared/exceptions/all-exceptions.filter';
 import { HealthController } from './shared/health/health.controller';
 import { MetaController } from './shared/http/meta.controller';
@@ -80,6 +81,7 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
     }),
 
     CacheModule,
+    FirebaseModule,
     AuthModule,
     UserModule,
     ReportModule,
