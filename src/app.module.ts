@@ -15,6 +15,7 @@ import { ShopModule } from './modules/shop/shop.module';
 import { SupplyModule } from './modules/supply/supply.module';
 import { ContentModule } from './modules/content/content.module';
 import { ReportModule } from './modules/report/report.module';
+import { StudioModule } from './modules/studio/studio.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UserModule } from './modules/user/user.module';
 import {
@@ -90,6 +91,7 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
     ReservationModule,
     ReviewModule,
     ShopModule,
+    StudioModule,
     FavoriteModule,
     AdModule,
     SupplyModule,

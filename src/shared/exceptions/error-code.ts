@@ -43,6 +43,14 @@ export enum ErrorCode {
   CAMPAIGN_NOT_FOUND = 'AD_CAMPAIGN_NOT_FOUND',
   AD_SLOT_SOLD_OUT = 'AD_SLOT_SOLD_OUT',
   FREE_UP_COOLDOWN = 'AD_FREE_UP_COOLDOWN',
+
+  // 스튜디오 (STUDIO)
+  STUDIO_NOT_FOUND = 'STUDIO_NOT_FOUND',
+  STUDIO_ALREADY_EXISTS = 'STUDIO_ALREADY_EXISTS',
+  STUDIO_FORBIDDEN = 'STUDIO_FORBIDDEN',
+  STUDIO_INVITE_CODE_INVALID = 'STUDIO_INVITE_CODE_INVALID',
+  STUDIO_INVITE_CODE_EXPIRED = 'STUDIO_INVITE_CODE_EXPIRED',
+  STUDIO_ALREADY_MEMBER = 'STUDIO_ALREADY_MEMBER',
 }
 
 /** HTTP 상태는 코드에 종속되므로 한 곳에서만 매핑한다 */
@@ -81,6 +89,13 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
   [ErrorCode.CAMPAIGN_NOT_FOUND]: 404,
   [ErrorCode.AD_SLOT_SOLD_OUT]: 409,
   [ErrorCode.FREE_UP_COOLDOWN]: 429,
+
+  [ErrorCode.STUDIO_NOT_FOUND]: 404,
+  [ErrorCode.STUDIO_ALREADY_EXISTS]: 409,
+  [ErrorCode.STUDIO_FORBIDDEN]: 403,
+  [ErrorCode.STUDIO_INVITE_CODE_INVALID]: 400,
+  [ErrorCode.STUDIO_INVITE_CODE_EXPIRED]: 400,
+  [ErrorCode.STUDIO_ALREADY_MEMBER]: 409,
 };
 
 /** 로그 노출용 기본 메시지. 사용자 노출 문구는 클라이언트가 코드로 i18n 처리한다 */
@@ -119,4 +134,11 @@ export const ERROR_MESSAGE: Record<ErrorCode, string> = {
   [ErrorCode.CAMPAIGN_NOT_FOUND]: 'Campaign not found',
   [ErrorCode.AD_SLOT_SOLD_OUT]: 'All ad slots are occupied',
   [ErrorCode.FREE_UP_COOLDOWN]: 'Free UP is on cooldown',
+
+  [ErrorCode.STUDIO_NOT_FOUND]: 'Studio not found',
+  [ErrorCode.STUDIO_ALREADY_EXISTS]: 'Already a member of a studio',
+  [ErrorCode.STUDIO_FORBIDDEN]: 'Studio access denied',
+  [ErrorCode.STUDIO_INVITE_CODE_INVALID]: 'Invalid invite code',
+  [ErrorCode.STUDIO_INVITE_CODE_EXPIRED]: 'Invite code has expired',
+  [ErrorCode.STUDIO_ALREADY_MEMBER]: 'Already an active member of this studio',
 };
