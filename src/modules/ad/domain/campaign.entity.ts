@@ -48,6 +48,12 @@ export const AD_PRODUCTS = {
     { code: 'ca14', label: '14일권', price: 33000, days: 14 },
     { code: 'ca30', label: '30일권', price: 59000, days: 30 },
   ],
+  [AdType.BANNER]: [
+    { code: 'ba3', label: '3일권', price: 19000, days: 3 },
+    { code: 'ba7', label: '7일권', price: 35000, days: 7 },
+    { code: 'ba14', label: '14일권', price: 59000, days: 14 },
+    { code: 'ba30', label: '30일권', price: 99000, days: 30 },
+  ],
 } as const;
 
 @Entity('ad_campaigns')
