@@ -64,6 +64,19 @@ export class ArtistPage extends BaseEntity {
   })
   location: string | null;
 
+  /** 'domestic' | 'overseas' — Google Places 선택 후 설정 */
+  @Column({ type: 'varchar', length: 10, default: 'domestic' })
+  regionType: string;
+
+  /** ISO 3166-1 alpha-2 국가 코드 (해외 타투이스트) */
+  @Index('idx_artist_country', { where: '"deletedAt" IS NULL AND "countryCode" IS NOT NULL' })
+  @Column({ type: 'varchar', length: 2, nullable: true })
+  countryCode: string | null;
+
+  /** 국가명 표시용 (예: Japan, France) */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  countryName: string | null;
+
   @Column({ type: 'jsonb', default: () => "'[]'" })
   genres: string[];
 

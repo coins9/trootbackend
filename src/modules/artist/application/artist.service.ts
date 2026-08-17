@@ -133,16 +133,28 @@ export class ArtistService {
     return page;
   }
 
-  async updatePage(userId: string, patch: Partial<ArtistPage>): Promise<ArtistPage> {
+  async updatePage(
+    userId: string,
+    patch: Partial<ArtistPage> & { lat?: number; lng?: number },
+  ): Promise<ArtistPage> {
     const artist = await this.getByUserId(userId);
     // 등급·Master 여부는 운영자만 변경 가능하므로 사용자 입력에서 제외
-    delete patch.tier;
-    delete patch.isSelectedMaster;
-    delete patch.rating;
-    delete patch.reviewCount;
+    const { lat, lng, ...rest } = patch as any;
+    delete rest.tier;
+    delete rest.isSelectedMaster;
+    delete rest.rating;
+    delete rest.reviewCount;
 
-    Object.assign(artist, patch);
+    Object.assign(artist, rest);
     const saved = await this.artists.save(artist);
+
+    if (lat !== undefined && lng !== undefined) {
+      await this.artists.query(
+        `UPDATE artist_pages SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography WHERE id = $3`,
+        [lng, lat, artist.id],
+      );
+    }
+
     await this.cache.del(CacheKey.artistDetail(artist.id));
     return saved;
   }
@@ -182,20 +194,31 @@ export class ArtistService {
     return buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
   }
 
-  /** 홈 피드 — 게시된 작품 전체 */
-  async feed(cursor: string | undefined, limit: number, sort: 'recent' | 'popular' = 'recent') {
+  /** 홈 피드 — 게시된 작품 전체 (지역/국가 필터 지원) */
+  async feed(
+    cursor: string | undefined,
+    limit: number,
+    sort: 'recent' | 'popular' = 'recent',
+    filter?: { countryCode?: string; regionSido?: string; regionSigungu?: string },
+  ) {
     // 다대일(artist) 조인만 있어 행이 늘지 않으므로 limit() 로 직접 제한한다.
-    // take() 는 조인+원시식(COALESCE) orderBy 와 함께 별칭 조회 버그를 유발한다.
     const qb = this.artworks
       .createQueryBuilder('w')
       .leftJoinAndSelect('w.artist', 'a')
       .where('w.status = :status', { status: ArtworkStatus.PUBLISHED })
       .limit(limit + 1);
 
+    if (filter?.countryCode) {
+      qb.andWhere('a.countryCode = :countryCode', { countryCode: filter.countryCode });
+    } else if (filter?.regionSigungu) {
+      qb.andWhere('a.regionSigungu = :regionSigungu', { regionSigungu: filter.regionSigungu });
+    } else if (filter?.regionSido) {
+      qb.andWhere('a.regionSido = :regionSido', { regionSido: filter.regionSido });
+    }
+
     if (sort === 'popular') {
       qb.orderBy('w.likeCount', 'DESC').addOrderBy('w.createdAt', 'DESC');
     } else {
-      // UP 된 작품을 우선 노출하되, 없으면 작성일 기준
       qb.orderBy('COALESCE(w.bumpedAt, w.createdAt)', 'DESC');
     }
 

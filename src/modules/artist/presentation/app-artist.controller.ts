@@ -24,6 +24,9 @@ class ArtistListQueryDto extends CursorPaginationQuery {
 
 class FeedQueryDto extends CursorPaginationQuery {
   @IsOptional() @IsEnum(['recent', 'popular']) sort?: 'recent' | 'popular';
+  @IsOptional() @IsString() @Length(2, 2) countryCode?: string;
+  @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
+  @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
 }
 
 class CreateArtistPageDto {
@@ -43,6 +46,11 @@ class UpdateArtistPageDto {
   @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
   @IsOptional() @IsArray() genres?: string[];
   @IsOptional() @IsArray() tags?: string[];
+  @IsOptional() @Type(() => Number) @IsLatitude() lat?: number;
+  @IsOptional() @Type(() => Number) @IsLongitude() lng?: number;
+  @IsOptional() @IsString() @Length(2, 2) countryCode?: string;
+  @IsOptional() @IsString() @Length(1, 100) countryName?: string;
+  @IsOptional() @IsEnum(['domestic', 'overseas']) regionType?: string;
 }
 
 class ArtworkDto {
@@ -78,7 +86,11 @@ export class AppArtistController {
   @Public()
   @Get('feed')
   feed(@Query() query: FeedQueryDto) {
-    return this.artistService.feed(query.cursor, query.limit, query.sort);
+    return this.artistService.feed(query.cursor, query.limit, query.sort, {
+      countryCode: query.countryCode,
+      regionSido: query.regionSido,
+      regionSigungu: query.regionSigungu,
+    });
   }
 
   /** 내 타투이스트 페이지 — :id 보다 먼저 선언해야 라우팅이 겹치지 않는다.
