@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as admin from 'firebase-admin';
+import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 
 export interface PushPayload {
   title: string;
@@ -11,7 +12,7 @@ export interface PushPayload {
 @Injectable()
 export class FirebaseService implements OnModuleInit {
   private readonly logger = new Logger(FirebaseService.name);
-  private app: admin.app.App | null = null;
+  private app: App | null = null;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -25,9 +26,9 @@ export class FirebaseService implements OnModuleInit {
       return;
     }
 
-    if (admin.apps.length === 0) {
-      this.app = admin.initializeApp({
-        credential: admin.credential.cert({
+    if (getApps().length === 0) {
+      this.app = initializeApp({
+        credential: cert({
           projectId,
           clientEmail,
           // Docker/CI 환경에서 \n 이스케이프 처리
@@ -35,7 +36,7 @@ export class FirebaseService implements OnModuleInit {
         }),
       });
     } else {
-      this.app = admin.apps[0] ?? null;
+      this.app = getApps()[0] ?? null;
     }
 
     this.logger.log('Firebase Admin SDK 초기화 완료');
@@ -44,7 +45,7 @@ export class FirebaseService implements OnModuleInit {
   async sendToToken(fcmToken: string, payload: PushPayload): Promise<void> {
     if (!this.app) return;
     try {
-      await admin.messaging(this.app).send({
+      await getMessaging(this.app).send({
         token: fcmToken,
         notification: { title: payload.title, body: payload.body },
         data: payload.data,

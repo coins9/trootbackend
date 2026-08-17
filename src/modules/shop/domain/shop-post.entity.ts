@@ -3,6 +3,7 @@ import { BaseEntity } from '../../../shared/database/base.entity';
 
 export enum ShopPostCategory {
   BOOTH_SHARE = 'booth_share',
+  BOOTH_SHARE_OVERSEAS = 'booth_share_overseas',
   MODEL_RECRUIT = 'model_recruit',
   MEDIA_EXPERT = 'media_expert',
 }
