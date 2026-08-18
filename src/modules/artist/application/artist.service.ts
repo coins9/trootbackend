@@ -199,7 +199,10 @@ export class ArtistService {
     cursor: string | undefined,
     limit: number,
     sort: 'recent' | 'popular' = 'recent',
-    filter?: { countryCode?: string; regionSido?: string; regionSigungu?: string },
+    filter?: {
+      countryCode?: string; regionSido?: string; regionSigungu?: string;
+      genre?: string; bodyPart?: string; priceMin?: number; priceMax?: number;
+    },
   ) {
     // 다대일(artist) 조인만 있어 행이 늘지 않으므로 limit() 로 직접 제한한다.
     const qb = this.artworks
@@ -214,6 +217,19 @@ export class ArtistService {
       qb.andWhere('a.regionSigungu = :regionSigungu', { regionSigungu: filter.regionSigungu });
     } else if (filter?.regionSido) {
       qb.andWhere('a.regionSido = :regionSido', { regionSido: filter.regionSido });
+    }
+
+    if (filter?.genre) {
+      qb.andWhere('w.genres @> :genre', { genre: JSON.stringify([filter.genre]) });
+    }
+    if (filter?.bodyPart) {
+      qb.andWhere('w.bodyPart = :bodyPart', { bodyPart: filter.bodyPart });
+    }
+    if (filter?.priceMin != null) {
+      qb.andWhere('w.priceKrw >= :priceMin', { priceMin: filter.priceMin });
+    }
+    if (filter?.priceMax != null && filter.priceMax < 10000000) {
+      qb.andWhere('w.priceKrw <= :priceMax', { priceMax: filter.priceMax });
     }
 
     if (sort === 'popular') {

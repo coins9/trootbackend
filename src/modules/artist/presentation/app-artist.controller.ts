@@ -27,6 +27,10 @@ class FeedQueryDto extends CursorPaginationQuery {
   @IsOptional() @IsString() @Length(2, 2) countryCode?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
+  @IsOptional() @IsString() @Length(1, 50) bodyPart?: string;
+  @IsOptional() @IsString() genre?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMin?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMax?: number;
 }
 
 class CreateArtistPageDto {
@@ -90,6 +94,10 @@ export class AppArtistController {
       countryCode: query.countryCode,
       regionSido: query.regionSido,
       regionSigungu: query.regionSigungu,
+      genre: query.genre,
+      bodyPart: query.bodyPart,
+      priceMin: query.priceMin,
+      priceMax: query.priceMax,
     });
   }
 
