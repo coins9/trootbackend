@@ -24,6 +24,10 @@ class VendorApplyDto {
   @IsEmail() contactEmail: string;
 }
 
+class VendorUpdateDto {
+  @IsOptional() @IsString() @Length(0, 500) openChatUrl?: string;
+}
+
 class ProductDto {
   @IsString() @Length(1, 200) name: string;
   @IsOptional() @IsString() description?: string;
@@ -55,6 +59,16 @@ export class AppSupplyController {
   @Post('vendors/apply')
   apply(@CurrentUser('id') userId: string, @Body() dto: VendorApplyDto) {
     return this.supplyService.applyVendor(userId, dto);
+  }
+
+  @Patch('vendors/me')
+  updateVendor(@CurrentUser('id') userId: string, @Body() dto: VendorUpdateDto) {
+    return this.supplyService.updateMyVendor(userId, dto);
+  }
+
+  @Post('vendors/me/inquiry')
+  recordInquiry(@CurrentUser('id') userId: string) {
+    return this.supplyService.incrementInquiry(userId);
   }
 
   @Get('vendors/me/products')

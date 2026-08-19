@@ -60,6 +60,12 @@ export class Vendor extends BaseEntity {
 
   @Column({ type: 'int', default: 0 })
   productCount: number;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  openChatUrl: string | null;
+
+  @Column({ type: 'int', default: 0 })
+  inquiryCount: number;
 }
 
 @Entity('products')

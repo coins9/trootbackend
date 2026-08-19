@@ -80,6 +80,21 @@ export class SupplyService {
     return vendor;
   }
 
+  async updateMyVendor(userId: string, patch: { openChatUrl?: string }): Promise<Vendor> {
+    const vendor = await this.getMyVendor(userId);
+    if (patch.openChatUrl !== undefined) {
+      vendor.openChatUrl = patch.openChatUrl.trim() || null;
+    }
+    return this.vendors.save(vendor);
+  }
+
+  async incrementInquiry(vendorOwnerId: string): Promise<void> {
+    const vendor = await this.vendors.findOne({ where: { userId: vendorOwnerId } });
+    if (vendor) {
+      await this.vendors.increment({ id: vendor.id }, 'inquiryCount', 1);
+    }
+  }
+
   /** 승인된 셀러만 상품을 등록할 수 있다 */
   private async assertApproved(userId: string): Promise<Vendor> {
     const vendor = await this.getMyVendor(userId);

@@ -318,13 +318,13 @@ export class ReservationService {
     };
   }
 
-  /** 리뷰 작성 가능한 완료 예약 */
+  /** 리뷰 작성 가능한 예약 — 확정(confirmed) 또는 완료(completed) 후 14일 이내 */
   async listReviewable(customerId: string) {
     const since = new Date(Date.now() - 14 * 86_400_000);
     const rows = await this.reservations.find({
       where: {
         customerId,
-        status: ReservationStatus.COMPLETED,
+        status: In([ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED]),
         updatedAt: Between(since, new Date()),
       },
       order: { updatedAt: 'DESC' },
