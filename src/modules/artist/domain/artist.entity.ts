@@ -77,6 +77,10 @@ export class ArtistPage extends BaseEntity {
   @Column({ type: 'varchar', length: 100, nullable: true })
   countryName: string | null;
 
+  /** 상세 주소 (건물명, 층수 등) */
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  detailAddress: string | null;
+
   @Column({ type: 'jsonb', default: () => "'[]'" })
   genres: string[];
 

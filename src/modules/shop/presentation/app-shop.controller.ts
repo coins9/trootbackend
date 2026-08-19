@@ -18,7 +18,9 @@ class ShopListQueryDto extends CursorPaginationQuery {
 class ShopPostDto {
   @IsEnum(ShopPostCategory) category: ShopPostCategory;
   @IsString() @Length(1, 100) title: string;
+  @IsOptional() @IsString() @Length(1, 100) titleEn?: string;
   @IsString() @Length(1, 2000) description: string;
+  @IsOptional() @IsString() @Length(1, 2000) descriptionEn?: string;
   @IsOptional() @IsString() @Length(1, 100) region?: string;
   @IsOptional() @IsArray() images?: string[];
   @IsOptional() @IsObject() attributes?: Record<string, unknown>;

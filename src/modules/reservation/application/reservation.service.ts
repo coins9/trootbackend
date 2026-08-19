@@ -216,16 +216,22 @@ export class ReservationService {
     return buildCursorPage(views, limit, (v) => v.scheduledAt);
   }
 
-  /** 캘린더 — 월 단위 조회 */
-  async schedule(userId: string, from: string, to: string): Promise<Reservation[]> {
+  /** 캘린더 — 월 단위 조회 (고객명 포함) */
+  async schedule(userId: string, from: string, to: string): Promise<(Reservation & { customerName: string | null })[]> {
     const artist = await this.artistService.getByUserId(userId);
-    return this.reservations.find({
+    const rows = await this.reservations.find({
       where: {
         artistPageId: artist.id,
         scheduledAt: Between(new Date(from), new Date(to)),
       },
       order: { scheduledAt: 'ASC' },
     });
+    const customerIds = [...new Set(rows.map((r) => r.customerId))];
+    const users = customerIds.length
+      ? await this.users.find({ where: { id: In(customerIds) }, select: { id: true, nickname: true } })
+      : [];
+    const userMap = new Map(users.map((u) => [u.id, u.nickname]));
+    return rows.map((r) => Object.assign(r, { customerName: userMap.get(r.customerId) ?? null }));
   }
 
   async getDetail(id: string, requesterId: string): Promise<Reservation> {

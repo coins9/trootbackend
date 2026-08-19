@@ -32,8 +32,14 @@ export class ShopPost extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   title: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  titleEn: string | null;
+
   @Column({ type: 'text' })
   description: string;
+
+  @Column({ type: 'text', nullable: true })
+  descriptionEn: string | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   region: string | null;

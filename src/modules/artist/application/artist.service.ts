@@ -202,6 +202,7 @@ export class ArtistService {
     filter?: {
       countryCode?: string; regionSido?: string; regionSigungu?: string;
       genre?: string; bodyPart?: string; priceMin?: number; priceMax?: number;
+      keyword?: string;
     },
   ) {
     // 다대일(artist) 조인만 있어 행이 늘지 않으므로 limit() 로 직접 제한한다.
@@ -230,6 +231,14 @@ export class ArtistService {
     }
     if (filter?.priceMax != null && filter.priceMax < 10000000) {
       qb.andWhere('w.priceKrw <= :priceMax', { priceMax: filter.priceMax });
+    }
+
+    if (filter?.keyword) {
+      const kw = `%${filter.keyword}%`;
+      qb.andWhere(
+        '(w.title ILIKE :kw OR a.pageName ILIKE :kw OR EXISTS (SELECT 1 FROM unnest(w.genres) g WHERE g ILIKE :kw))',
+        { kw },
+      );
     }
 
     if (sort === 'popular') {

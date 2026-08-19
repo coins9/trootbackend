@@ -31,12 +31,14 @@ class FeedQueryDto extends CursorPaginationQuery {
   @IsOptional() @IsString() genre?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMin?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMax?: number;
+  @IsOptional() @IsString() @Length(1, 100) keyword?: string;
 }
 
 class CreateArtistPageDto {
   @IsString() @Length(1, 100) pageName: string;
   @IsString() @Length(2, 50) handle: string;
   @IsOptional() @IsString() bio?: string;
+  @IsOptional() @IsString() intro?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
 }
@@ -44,6 +46,7 @@ class CreateArtistPageDto {
 class UpdateArtistPageDto {
   @IsOptional() @IsString() @Length(1, 100) pageName?: string;
   @IsOptional() @IsString() bio?: string;
+  @IsOptional() @IsString() intro?: string;
   @IsOptional() @IsString() profileImage?: string;
   @IsOptional() @IsString() coverImage?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
@@ -58,6 +61,7 @@ class UpdateArtistPageDto {
   @IsOptional() @IsString() openChatUrl?: string;
   @IsOptional() @IsString() availableHours?: string;
   @IsOptional() @IsString() closedDay?: string;
+  @IsOptional() @IsString() @Length(1, 200) detailAddress?: string;
 }
 
 class ArtworkDto {
@@ -101,6 +105,7 @@ export class AppArtistController {
       bodyPart: query.bodyPart,
       priceMin: query.priceMin,
       priceMax: query.priceMax,
+      keyword: query.keyword,
     });
   }
 
