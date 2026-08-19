@@ -7,6 +7,7 @@ import { buildCursorPage } from '../../../shared/http/pagination.dto';
 import { ArtistService } from '../../artist/application/artist.service';
 import { User } from '../../user/domain/user.entity';
 import { ArtistPage } from '../../artist/domain/artist.entity';
+import { Artwork } from '../../artist/domain/artwork.entity';
 import {
   DepositStatus, Reservation, ReservationStatus,
 } from '../domain/reservation.entity';
@@ -25,6 +26,7 @@ export interface ArtistReservationView {
   depositKrw: number;
   depositStatus: DepositStatus;
   artworkId: string | null;
+  artworkTitle: string | null;
   createdAt: string;
   customer: { id: string; nickname: string | null; profileImage: string | null } | null;
 }
@@ -49,6 +51,7 @@ export interface CustomerReservationView {
   durationMinutes: number;
   bodyPart: string | null;
   sizePreset: string | null;
+  artworkTitle: string | null;
   depositKrw: number;
   depositStatus: DepositStatus;
   estimatedPriceKrw: number | null;
@@ -59,6 +62,7 @@ export interface CustomerReservationView {
     profileImage: string | null;
     regionSido: string | null;
     regionSigungu: string | null;
+    openChatUrl: string | null;
   } | null;
 }
 
@@ -83,6 +87,7 @@ export class ReservationService {
     @InjectRepository(Reservation) private readonly reservations: Repository<Reservation>,
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(ArtistPage) private readonly artists: Repository<ArtistPage>,
+    @InjectRepository(Artwork) private readonly artworks: Repository<Artwork>,
     private readonly artistService: ArtistService,
   ) {}
 
@@ -117,6 +122,12 @@ export class ReservationService {
       : [];
     const artistMap = new Map(artists.map((a) => [a.id, a]));
 
+    const artworkIds = [...new Set(rows.map((r) => r.artworkId).filter(Boolean))] as string[];
+    const artworksData = artworkIds.length
+      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: ['id', 'title'] })
+      : [];
+    const artworkMap = new Map(artworksData.map((a) => [a.id, a]));
+
     const views: CustomerReservationView[] = rows.map((r) => ({
       id: r.id,
       status: r.status,
@@ -124,6 +135,7 @@ export class ReservationService {
       durationMinutes: r.durationMinutes,
       bodyPart: r.bodyPart,
       sizePreset: r.sizePreset,
+      artworkTitle: r.artworkId ? (artworkMap.get(r.artworkId)?.title ?? null) : null,
       depositKrw: r.depositKrw,
       depositStatus: r.depositStatus,
       estimatedPriceKrw: r.estimatedPriceKrw,
@@ -135,6 +147,7 @@ export class ReservationService {
             profileImage: artistMap.get(r.artistPageId)!.profileImage,
             regionSido: artistMap.get(r.artistPageId)!.regionSido,
             regionSigungu: artistMap.get(r.artistPageId)!.regionSigungu,
+            openChatUrl: artistMap.get(r.artistPageId)!.openChatUrl,
           }
         : null,
     }));
@@ -170,6 +183,12 @@ export class ReservationService {
       : [];
     const userMap = new Map(users.map((u) => [u.id, u]));
 
+    const artworkIds = [...new Set(rows.map((r) => r.artworkId).filter(Boolean))] as string[];
+    const artworksData = artworkIds.length
+      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: ['id', 'title'] })
+      : [];
+    const artworkMap = new Map(artworksData.map((a) => [a.id, a]));
+
     const views: ArtistReservationView[] = rows.map((r) => ({
       id: r.id,
       status: r.status,
@@ -183,6 +202,7 @@ export class ReservationService {
       depositKrw: r.depositKrw,
       depositStatus: r.depositStatus,
       artworkId: r.artworkId,
+      artworkTitle: r.artworkId ? (artworkMap.get(r.artworkId)?.title ?? null) : null,
       createdAt: r.createdAt.toISOString(),
       customer: userMap.has(r.customerId)
         ? {
