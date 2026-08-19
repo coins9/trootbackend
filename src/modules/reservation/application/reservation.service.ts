@@ -124,7 +124,7 @@ export class ReservationService {
 
     const artworkIds = [...new Set(rows.map((r) => r.artworkId).filter(Boolean))] as string[];
     const artworksData = artworkIds.length
-      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: ['id', 'title'] })
+      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: { id: true, title: true } })
       : [];
     const artworkMap = new Map(artworksData.map((a) => [a.id, a]));
 
@@ -185,7 +185,7 @@ export class ReservationService {
 
     const artworkIds = [...new Set(rows.map((r) => r.artworkId).filter(Boolean))] as string[];
     const artworksData = artworkIds.length
-      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: ['id', 'title'] })
+      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: { id: true, title: true } })
       : [];
     const artworkMap = new Map(artworksData.map((a) => [a.id, a]));
 
