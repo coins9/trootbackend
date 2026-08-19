@@ -97,6 +97,18 @@ export class ArtistPage extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   followerCount: number;
 
+  /** 카카오 오픈채팅 링크 */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  openChatUrl: string | null;
+
+  /** 상담 가능 시간 (예: 10:00~22:00) */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  availableHours: string | null;
+
+  /** 휴무일 (예: 매주 월요일) */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  closedDay: string | null;
+
   /** 무료 UP 사용 시각 — 24시간 쿨다운 판정 */
   @Column({ type: 'timestamptz', nullable: true })
   freeUpUsedAt: Date | null;
