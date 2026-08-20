@@ -221,10 +221,28 @@ export class ArtistService {
     }
 
     if (filter?.genre) {
-      qb.andWhere('w.genres @> :genre', { genre: JSON.stringify([filter.genre]) });
+      // 콤마로 구분된 다중 선택 — 하나라도 겹치면 매치 (jsonb 배열이라 @> OR 로 overlap 구현)
+      const genreList = filter.genre.split(',').map((g) => g.trim()).filter(Boolean);
+      if (genreList.length === 1) {
+        qb.andWhere('w.genres @> :genre', { genre: JSON.stringify(genreList) });
+      } else if (genreList.length > 1) {
+        qb.andWhere(
+          new Brackets((w) => {
+            genreList.forEach((g, i) => {
+              const param = `genre${i}`;
+              const cond = `w.genres @> :${param}`;
+              if (i === 0) w.where(cond, { [param]: JSON.stringify([g]) });
+              else w.orWhere(cond, { [param]: JSON.stringify([g]) });
+            });
+          }),
+        );
+      }
     }
     if (filter?.bodyPart) {
-      qb.andWhere('w.bodyPart = :bodyPart', { bodyPart: filter.bodyPart });
+      const bodyPartList = filter.bodyPart.split(',').map((b) => b.trim()).filter(Boolean);
+      if (bodyPartList.length > 0) {
+        qb.andWhere('w.bodyPart IN (:...bodyPartList)', { bodyPartList });
+      }
     }
     if (filter?.priceMin != null) {
       qb.andWhere('w.priceKrw >= :priceMin', { priceMin: filter.priceMin });

@@ -27,8 +27,8 @@ class FeedQueryDto extends CursorPaginationQuery {
   @IsOptional() @IsString() @Length(2, 2) countryCode?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSido?: string;
   @IsOptional() @IsString() @Length(1, 50) regionSigungu?: string;
-  @IsOptional() @IsString() @Length(1, 50) bodyPart?: string;
-  @IsOptional() @IsString() genre?: string;
+  @IsOptional() @IsString() @Length(1, 200) bodyPart?: string;
+  @IsOptional() @IsString() @Length(1, 200) genre?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMin?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMax?: number;
   @IsOptional() @IsString() @Length(1, 100) keyword?: string;
