@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThan, Repository } from 'typeorm';
+import { In, IsNull, LessThan, Repository } from 'typeorm';
 import { CacheService } from '../../../shared/cache/cache.service';
 import { AppException } from '../../../shared/exceptions/app.exception';
 import { ErrorCode } from '../../../shared/exceptions/error-code';
 import type { OffsetPage, OffsetPaginationQuery } from '../../../shared/http/pagination.dto';
-import { Artwork } from '../../artist/domain/artwork.entity';
+import { Artwork, ArtworkStatus } from '../../artist/domain/artwork.entity';
 import {
   AD_PRODUCTS, AdCampaign, AdPlacement, AdType, CampaignStatus,
 } from '../domain/campaign.entity';
@@ -224,6 +224,55 @@ export class AdService {
       activeCount: Number(raw?.activeCount ?? 0),
       ctr: impressions ? Number(((clicks / impressions) * 100).toFixed(2)) : 0,
     };
+  }
+
+  /**
+   * 홈 피드에 실제로 끼워 넣을 작품 광고 — 카드광고(고정 슬롯)와 슈퍼UP(랭킹 부스트) 캠페인을
+   * 대상 작품 정보와 함께 반환한다. 캠페인만으로는 제목·이미지·가격이 없어 피드에 그릴 수 없다.
+   */
+  async getActiveArtworkAds(
+    segment: AdSegment,
+  ): Promise<{ campaignId: string; type: AdType; artwork: Artwork }[]> {
+    const qb = this.campaigns
+      .createQueryBuilder('c')
+      .where('c.placement = :placement', { placement: AdPlacement.ARTWORK })
+      .andWhere('c.type IN (:...types)', {
+        types: [AdType.CARD_AD, AdType.SUPER_UP],
+      })
+      .andWhere('c.status = :status', { status: CampaignStatus.ACTIVE })
+      .andWhere('(c.expiresAt IS NULL OR c.expiresAt > now())')
+      .andWhere('c.targetId IS NOT NULL');
+
+    if (segment.regionKey) {
+      qb.andWhere('(c.regionKey = :region OR c.regionKey IS NULL)', {
+        region: segment.regionKey,
+      });
+    } else {
+      qb.andWhere('c.regionKey IS NULL');
+    }
+    if (segment.genreKey) {
+      qb.andWhere('(c.genreKey = :genre OR c.genreKey IS NULL)', {
+        genre: segment.genreKey,
+      });
+    }
+
+    const campaigns = await qb.getMany();
+    if (campaigns.length === 0) return [];
+
+    const targetIds = [...new Set(campaigns.map((c) => c.targetId!))];
+    const artworks = await this.artworks.find({
+      where: { id: In(targetIds), status: ArtworkStatus.PUBLISHED },
+      relations: { artist: true },
+    });
+    const artworkMap = new Map(artworks.map((a) => [a.id, a]));
+
+    return campaigns
+      .filter((c) => artworkMap.has(c.targetId!))
+      .map((c) => ({
+        campaignId: c.id,
+        type: c.type,
+        artwork: artworkMap.get(c.targetId!)!,
+      }));
   }
 
   async trackImpression(campaignId: string): Promise<void> {

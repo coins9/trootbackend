@@ -81,6 +81,13 @@ export class AppReservationController {
     return this.reservationService.depositSummary(userId);
   }
 
+  /** 광고 및 통계 관리 화면 — 작품별 예약 요청(문의) 건수 */
+  @Get('artist/counts-by-artwork')
+  @Roles(UserRole.TATTOOIST, UserRole.ADMIN)
+  countByArtwork(@CurrentUser('id') userId: string) {
+    return this.reservationService.countByArtwork(userId);
+  }
+
   @Get(':id')
   detail(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.reservationService.getDetail(id, userId);

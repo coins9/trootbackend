@@ -26,6 +26,11 @@ class ServingQuery {
   @IsOptional() @IsString() @Length(1, 50) genreKey?: string;
 }
 
+class ServingArtworksQuery {
+  @IsOptional() @IsString() @Length(1, 50) regionKey?: string;
+  @IsOptional() @IsString() @Length(1, 50) genreKey?: string;
+}
+
 class AvailabilityQuery {
   @IsEnum(AdPlacement) placement: AdPlacement;
   @IsString() @Length(1, 50) regionKey: string;
@@ -47,6 +52,16 @@ export class AppAdController {
   @Get('serving')
   serving(@Query() q: ServingQuery) {
     return this.adService.getServingAds(q.placement, q.type, {
+      regionKey: q.regionKey,
+      genreKey: q.genreKey,
+    });
+  }
+
+  /** 홈 피드에 끼워 넣을 작품 광고(카드광고 + 슈퍼UP) — 대상 작품 정보 포함 */
+  @Public()
+  @Get('serving/artworks')
+  servingArtworks(@Query() q: ServingArtworksQuery) {
+    return this.adService.getActiveArtworkAds({
       regionKey: q.regionKey,
       genreKey: q.genreKey,
     });

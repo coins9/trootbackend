@@ -80,11 +80,21 @@ export class SupplyService {
     return vendor;
   }
 
-  async updateMyVendor(userId: string, patch: { openChatUrl?: string }): Promise<Vendor> {
+  async updateMyVendor(
+    userId: string,
+    patch: {
+      openChatUrl?: string; name?: string; businessNo?: string;
+      ecommerceRegNo?: string; contactEmail?: string;
+    },
+  ): Promise<Vendor> {
     const vendor = await this.getMyVendor(userId);
     if (patch.openChatUrl !== undefined) {
       vendor.openChatUrl = patch.openChatUrl.trim() || null;
     }
+    if (patch.name !== undefined) vendor.name = patch.name.trim();
+    if (patch.businessNo !== undefined) vendor.businessNo = patch.businessNo.trim();
+    if (patch.ecommerceRegNo !== undefined) vendor.ecommerceRegNo = patch.ecommerceRegNo.trim() || null;
+    if (patch.contactEmail !== undefined) vendor.contactEmail = patch.contactEmail.trim();
     return this.vendors.save(vendor);
   }
 

@@ -26,6 +26,10 @@ class VendorApplyDto {
 
 class VendorUpdateDto {
   @IsOptional() @IsString() @Length(0, 500) openChatUrl?: string;
+  @IsOptional() @IsString() @Length(1, 200) name?: string;
+  @IsOptional() @IsString() @Length(1, 50) businessNo?: string;
+  @IsOptional() @IsString() @Length(0, 100) ecommerceRegNo?: string;
+  @IsOptional() @IsEmail() contactEmail?: string;
 }
 
 class ProductDto {

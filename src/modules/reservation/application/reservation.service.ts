@@ -324,6 +324,22 @@ export class ReservationService {
     };
   }
 
+  /** 광고 및 통계 관리 화면 — 작품별 예약 요청(문의) 건수 */
+  async countByArtwork(userId: string): Promise<Record<string, number>> {
+    const artist = await this.artistService.getByUserId(userId);
+
+    const rows = await this.reservations
+      .createQueryBuilder('r')
+      .select('r.artworkId', 'artworkId')
+      .addSelect('COUNT(*)::int', 'count')
+      .where('r.artistPageId = :artistPageId', { artistPageId: artist.id })
+      .andWhere('r.artworkId IS NOT NULL')
+      .groupBy('r.artworkId')
+      .getRawMany<{ artworkId: string; count: number }>();
+
+    return Object.fromEntries(rows.map((r) => [r.artworkId, r.count]));
+  }
+
   /** 리뷰 작성 가능한 예약 — 확정(confirmed) 또는 완료(completed) 후 14일 이내 */
   async listReviewable(customerId: string) {
     const since = new Date(Date.now() - 14 * 86_400_000);
