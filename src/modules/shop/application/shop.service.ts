@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AppException } from '../../../shared/exceptions/app.exception';
 import { ErrorCode } from '../../../shared/exceptions/error-code';
 import {
@@ -9,6 +9,15 @@ import {
 import {
   ShopApplication, ShopPost, ShopPostCategory, ShopPostStatus,
 } from '../domain/shop-post.entity';
+import { User } from '../../user/domain/user.entity';
+
+export interface ShopAuthor {
+  id: string;
+  nickname: string | null;
+  profileImage: string | null;
+}
+
+export type ShopPostWithAuthor = ShopPost & { author: ShopAuthor };
 
 export interface ShopListQuery {
   category: ShopPostCategory;
@@ -22,7 +31,24 @@ export class ShopService {
   constructor(
     @InjectRepository(ShopPost) private readonly posts: Repository<ShopPost>,
     @InjectRepository(ShopApplication) private readonly applications: Repository<ShopApplication>,
+    @InjectRepository(User) private readonly users: Repository<User>,
   ) {}
+
+  private async attachAuthors(posts: ShopPost[]): Promise<ShopPostWithAuthor[]> {
+    if (posts.length === 0) return [];
+    const ids = [...new Set(posts.map((p) => p.authorId))];
+    const authors = await this.users.find({
+      where: { id: In(ids) },
+      select: { id: true, nickname: true, profileImage: true },
+    });
+    const map = new Map(authors.map((u) => [u.id, u]));
+    return posts.map((p) => {
+      const u = map.get(p.authorId);
+      return Object.assign(Object.create(Object.getPrototypeOf(p)), p, {
+        author: { id: p.authorId, nickname: u?.nickname ?? null, profileImage: u?.profileImage ?? null },
+      }) as ShopPostWithAuthor;
+    });
+  }
 
   async list(query: ShopListQuery) {
     const qb = this.posts
@@ -36,16 +62,18 @@ export class ShopService {
     if (query.cursor) qb.andWhere('p.createdAt < :cursor', { cursor: new Date(query.cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, query.limit, (r) => r.createdAt.toISOString());
+    const withAuthors = await this.attachAuthors(rows);
+    return buildCursorPage(withAuthors, query.limit, (r) => r.createdAt.toISOString());
   }
 
-  async getDetail(id: string): Promise<ShopPost> {
+  async getDetail(id: string): Promise<ShopPostWithAuthor> {
     const post = await this.posts.findOne({ where: { id } });
     if (!post) throw new AppException(ErrorCode.NOT_FOUND, { details: { id } });
 
     // 조회수는 응답을 막지 않도록 await 하지 않는다
     void this.posts.increment({ id }, 'viewCount', 1);
-    return post;
+    const [withAuthor] = await this.attachAuthors([post]);
+    return withAuthor;
   }
 
   async create(authorId: string, input: Partial<ShopPost>): Promise<ShopPost> {
@@ -81,7 +109,8 @@ export class ShopService {
     if (cursor) qb.andWhere('p.createdAt < :cursor', { cursor: new Date(cursor) });
 
     const rows = await qb.getMany();
-    return buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+    const withAuthors = await this.attachAuthors(rows);
+    return buildCursorPage(withAuthors, limit, (r) => r.createdAt.toISOString());
   }
 
   async setStatus(id: string, authorId: string, status: ShopPostStatus): Promise<ShopPost> {
