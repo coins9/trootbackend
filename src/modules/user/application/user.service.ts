@@ -102,6 +102,13 @@ export class UserService {
     return this.getProfile(userId);
   }
 
+  async updateProfileImage(userId: string, profileImage: string): Promise<UserProfile> {
+    const result = await this.users.update(userId, { profileImage });
+    if (!result.affected) throw new AppException(ErrorCode.USER_NOT_FOUND);
+    await this.invalidate(userId);
+    return this.getProfile(userId);
+  }
+
   async updateFcmToken(userId: string, fcmToken: string, platform: 'ios' | 'android'): Promise<void> {
     await this.users.update(userId, { fcmToken, fcmPlatform: platform });
   }

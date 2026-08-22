@@ -38,8 +38,14 @@ export class Artwork extends BaseEntity {
   @Column({ type: 'varchar', length: 200 })
   title: string;
 
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  titleEn: string | null;
+
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  descriptionEn: string | null;
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
   images: string[];

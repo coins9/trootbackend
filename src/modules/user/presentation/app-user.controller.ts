@@ -32,6 +32,12 @@ class SwitchRoleDto {
   role: UserRole;
 }
 
+class ProfileImageDto {
+  @IsString()
+  @Length(1, 500)
+  profileImage: string;
+}
+
 class FcmTokenDto {
   @IsString()
   @MaxLength(500)
@@ -67,6 +73,11 @@ export class AppUserController {
   @Patch('me/nickname')
   nickname(@CurrentUser('id') userId: string, @Body() dto: NicknameDto) {
     return this.userService.updateNickname(userId, dto.nickname);
+  }
+
+  @Patch('me/profile-image')
+  updateProfileImage(@CurrentUser('id') userId: string, @Body() dto: ProfileImageDto) {
+    return this.userService.updateProfileImage(userId, dto.profileImage);
   }
 
   @Patch('me/language')

@@ -67,7 +67,9 @@ class UpdateArtistPageDto {
 class ArtworkDto {
   @IsOptional() @IsEnum(ArtworkType) type?: ArtworkType;
   @IsString() @Length(1, 200) title: string;
+  @IsOptional() @IsString() @Length(1, 200) titleEn?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() descriptionEn?: string;
   @IsOptional() @IsArray() images?: string[];
   @IsOptional() @IsString() thumbnail?: string;
   @IsOptional() @IsArray() genres?: string[];
