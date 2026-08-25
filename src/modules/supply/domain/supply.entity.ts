@@ -113,6 +113,26 @@ export class Product extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   soldCount: number;
 
+  /** 리스트 카드에 노출되는 한 줄 부제목 */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  subtitle: string | null;
+
+  /** 영문 상품명 */
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  nameEn: string | null;
+
+  /** 영문 상품 설명 */
+  @Column({ type: 'text', nullable: true })
+  descriptionEn: string | null;
+
+  /** 카카오 오픈채팅 1:1 문의 URL */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  openChatUrl: string | null;
+
+  /** 외부 스토어 구매 링크 */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  storeUrl: string | null;
+
   /** 외부 스마트스토어 등으로 연결 (MVP 는 아웃바운드 링크) */
   @Column({ type: 'varchar', length: 500, nullable: true })
   externalUrl: string | null;

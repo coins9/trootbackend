@@ -34,7 +34,10 @@ class VendorUpdateDto {
 
 class ProductDto {
   @IsString() @Length(1, 200) name: string;
+  @IsOptional() @IsString() @Length(1, 100) subtitle?: string;
+  @IsOptional() @IsString() @Length(1, 200) nameEn?: string;
   @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() descriptionEn?: string;
   @IsEnum(ProductCategory) category: ProductCategory;
   @IsOptional() @IsString() @Length(1, 100) brand?: string;
   @Type(() => Number) @IsInt() @Min(0) priceKrw: number;
@@ -43,6 +46,8 @@ class ProductDto {
   @IsOptional() @IsString() thumbnail?: string;
   @IsOptional() @IsObject() attributes?: Record<string, unknown>;
   @IsOptional() @IsString() @Length(1, 500) externalUrl?: string;
+  @IsOptional() @IsString() @Length(1, 500) openChatUrl?: string;
+  @IsOptional() @IsString() @Length(1, 500) storeUrl?: string;
 }
 
 @Controller('app/supplies')
