@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/configuration';
 import { AdModule } from './modules/ad/ad.module';
 import { AdminModule } from './modules/admin/admin.module';
-import { BackupModule } from './modules/backup/backup.module';
 import { ArtistModule } from './modules/artist/artist.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
@@ -38,8 +36,6 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
       load: [configuration],
       cache: true,
     }),
-
-    ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -89,7 +85,6 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
     CacheModule,
     SlackModule,
     FirebaseModule,
-    BackupModule,
     AuthModule,
     UserModule,
     ReportModule,

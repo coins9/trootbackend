@@ -49,6 +49,16 @@ export class UserService {
     return profile;
   }
 
+  /** 다른 유저의 공개 프로필 — 이메일·역할 등 민감정보 제외 */
+  async getPublicProfile(targetId: string): Promise<{ id: string; nickname: string | null; profileImage: string | null }> {
+    const user = await this.users.findOne({
+      where: { id: targetId },
+      select: { id: true, nickname: true, profileImage: true, status: true },
+    });
+    if (!user || user.status !== UserStatus.ACTIVE) throw new AppException(ErrorCode.USER_NOT_FOUND);
+    return { id: user.id, nickname: user.nickname, profileImage: user.profileImage };
+  }
+
   /** 온보딩: 닉네임 + 역할 확정 */
   async completeOnboarding(
     userId: string,

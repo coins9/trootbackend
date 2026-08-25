@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { IsEnum, IsString, Length, MaxLength } from 'class-validator';
 import { AllowUnonboarded, CurrentUser } from '../../../shared/auth/guards';
 import { UserRole } from '../domain/user.entity';
@@ -55,6 +55,11 @@ export class AppUserController {
   @AllowUnonboarded()
   me(@CurrentUser('id') userId: string) {
     return this.userService.getProfile(userId);
+  }
+
+  @Get(':id/public')
+  publicProfile(@Param('id') id: string) {
+    return this.userService.getPublicProfile(id);
   }
 
   @Post('onboarding')
