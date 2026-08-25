@@ -13,6 +13,8 @@ RUN npm run build && npm prune --omit=dev
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+# pg_dump 실행을 위해 postgresql-client 설치 (DB 자동 백업 cron)
+RUN apk add --no-cache postgresql16-client
 # root 로 실행하지 않는다
 USER node
 COPY --from=build --chown=node:node /app/node_modules ./node_modules

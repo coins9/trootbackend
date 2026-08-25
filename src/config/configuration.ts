@@ -60,6 +60,13 @@ export interface AppConfig {
     publicBaseUrl: string;
     /** presigned PUT URL 유효시간(초) */
     uploadTtlSec: number;
+    /** DB 백업 전용 버킷 (기본값: troot-backups) */
+    backupBucket: string;
+  };
+
+  /** Slack Incoming Webhook URLs */
+  slack: {
+    webhookReport?: string;
   };
 
   /** Cloudflare Tunnel 뒤에 배포된다는 전제 */
@@ -136,6 +143,11 @@ export default (): AppConfig => ({
     bucket: process.env.R2_BUCKET ?? 'troot',
     publicBaseUrl: (process.env.R2_PUBLIC_BASE_URL ?? '').replace(/\/$/, ''),
     uploadTtlSec: int(process.env.R2_UPLOAD_TTL_SEC, 300),
+    backupBucket: process.env.R2_BACKUP_BUCKET || 'troot-backups',
+  },
+
+  slack: {
+    webhookReport: process.env.SLACK_WEBHOOK_REPORT || undefined,
   },
 
   network: (() => {

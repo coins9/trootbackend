@@ -7,6 +7,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import {
   OffsetPage, OffsetPaginationQuery,
 } from '../../../shared/http/pagination.dto';
+import { SlackService } from '../../../shared/slack/slack.service';
 import { User, UserStatus } from '../../user/domain/user.entity';
 import {
   Report, ReportReason, ReportStatus, ReportTargetType, SANCTION_THRESHOLD,
@@ -30,6 +31,7 @@ export class ReportService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly cache: CacheService,
+    private readonly slack: SlackService,
   ) {}
 
   /**
@@ -93,6 +95,16 @@ export class ReportService {
 
       await this.cache.del(CacheKey.reportPendingCount(), CacheKey.adminDashboard());
       if (command.targetUserId) await this.cache.del(`auth:user:${command.targetUserId}`);
+
+      // Slack 알림 — 트랜잭션 밖에서 fire & forget (실패해도 신고 접수에 영향 없음)
+      this.slack.sendReport({
+        reporterDisplay: `id=${command.reporterId}`,
+        targetDisplay: command.targetUserId ? `id=${command.targetUserId}` : `${command.targetType}(${command.targetId})`,
+        reason: command.reason,
+        targetType: command.targetType,
+        detail: command.detail,
+        sanctioned,
+      });
 
       return { id: report.id, sanctioned };
     });
