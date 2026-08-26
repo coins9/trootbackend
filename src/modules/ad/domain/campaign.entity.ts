@@ -115,6 +115,10 @@ export class AdCampaign extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   clicks: number;
 
+  /** 광고를 통한 문의 건수 (상세 → 문의하기 버튼 클릭 시 증가) */
+  @Column({ type: 'int', default: 0 })
+  inquiries: number;
+
   /**
    * 관리자 강제 노출 가중치. 0 = 일반, 높을수록 세그먼트 상단 고정.
    * 운영이 특정 광고/작품을 정책적으로 끌어올릴 때 사용(라운드로빈보다 우선).

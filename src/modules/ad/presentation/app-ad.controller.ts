@@ -57,7 +57,7 @@ export class AppAdController {
     });
   }
 
-  /** 홈 피드에 끼워 넣을 작품 광고(카드광고 + 슈퍼UP) — 대상 작품 정보 포함 */
+  /** 홈 피드에 끼워 넣을 작품 광고(카드광고 + 슈퍼UP + 배너) — 대상 작품 정보 포함 */
   @Public()
   @Get('serving/artworks')
   servingArtworks(@Query() q: ServingArtworksQuery) {
@@ -86,6 +86,10 @@ export class AppAdController {
     return this.adService.stats(userId);
   }
 
+  /**
+   * 광고 구매 신청 — PENDING 캠페인 생성.
+   * 이후 PG 결제 완료 후 /:id/activate 를 호출해야 광고가 시작된다.
+   */
   @Post('purchase')
   purchase(@CurrentUser('id') userId: string, @Body() dto: PurchaseDto) {
     return this.adService.purchase({
@@ -98,11 +102,24 @@ export class AppAdController {
     });
   }
 
+  /**
+   * 광고 활성화 — 결제 확인 후 PENDING → ACTIVE 전환.
+   * PG 연동 전 테스트 환경에서는 purchase() 직후 클라이언트가 즉시 호출한다.
+   */
+  @Post(':id/activate')
+  activate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.adService.activateCampaign(id, userId);
+  }
+
   @Post('super-up')
   superUp(@CurrentUser('id') userId: string, @Body() dto: SuperUpDto) {
     return this.adService.useSuperUp(userId, dto.campaignId, dto.targetId);
   }
 
+  /** 노출 집계 — ACTIVE 캠페인만 카운트됨 */
   @Public()
   @Post(':id/impression')
   async impression(@Param('id', ParseUUIDPipe) id: string) {
@@ -110,10 +127,22 @@ export class AppAdController {
     return { tracked: true };
   }
 
+  /** 클릭 집계 — ACTIVE 캠페인만 카운트됨 */
   @Public()
   @Post(':id/click')
   async click(@Param('id', ParseUUIDPipe) id: string) {
     void this.adService.trackClick(id);
+    return { tracked: true };
+  }
+
+  /**
+   * 문의 집계 — 광고를 통해 상세 화면의 문의하기/예약하기 버튼을 눌렀을 때 호출.
+   * ACTIVE 캠페인만 카운트됨.
+   */
+  @Public()
+  @Post(':id/inquiry')
+  async inquiry(@Param('id', ParseUUIDPipe) id: string) {
+    void this.adService.trackInquiry(id);
     return { tracked: true };
   }
 }
