@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository } from 'typeorm';
+import { Between, In, Not, Repository } from 'typeorm';
 import { AppException } from '../../../shared/exceptions/app.exception';
 import { ErrorCode } from '../../../shared/exceptions/error-code';
 import { buildCursorPage } from '../../../shared/http/pagination.dto';
@@ -8,6 +8,7 @@ import { ArtistService } from '../../artist/application/artist.service';
 import { User } from '../../user/domain/user.entity';
 import { ArtistPage } from '../../artist/domain/artist.entity';
 import { Artwork } from '../../artist/domain/artwork.entity';
+import { NotificationService } from '../../notification/application/notification.service';
 import {
   DepositStatus, Reservation, ReservationStatus,
 } from '../domain/reservation.entity';
@@ -52,6 +53,7 @@ export interface CustomerReservationView {
   bodyPart: string | null;
   sizePreset: string | null;
   artworkTitle: string | null;
+  artworkPriceKrw: number | null;
   depositKrw: number;
   depositStatus: DepositStatus;
   estimatedPriceKrw: number | null;
@@ -89,19 +91,31 @@ export class ReservationService {
     @InjectRepository(ArtistPage) private readonly artists: Repository<ArtistPage>,
     @InjectRepository(Artwork) private readonly artworks: Repository<Artwork>,
     private readonly artistService: ArtistService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async create(command: CreateReservationCommand): Promise<Reservation> {
     // 존재하지 않는 타투이스트로 예약이 생기지 않도록 먼저 검증
     await this.artistService.getDetail(command.artistPageId);
 
-    return this.reservations.save(
+    const reservation = await this.reservations.save(
       this.reservations.create({
         ...command,
         scheduledAt: new Date(command.scheduledAt),
         status: ReservationStatus.REQUESTED,
       }),
     );
+    const artist = await this.artists.findOne({ where: { id: reservation.artistPageId }, select: { userId: true } });
+    if (artist) await this.notifications.notify({
+      userId: artist.userId,
+      type: 'reservation_created',
+      preference: 'reservationStatus',
+      titleKo: '새 예약 요청', titleEn: 'New booking request',
+      bodyKo: '새로운 예약 요청이 도착했습니다.', bodyEn: 'You received a new booking request.',
+      data: { screen: 'ArtistReservation', reservationId: reservation.id },
+      idempotencyKey: `reservation-created:${reservation.id}`,
+    });
+    return reservation;
   }
 
   /** 고객 목록 (타투이스트 정보 조인) */
@@ -124,7 +138,7 @@ export class ReservationService {
 
     const artworkIds = [...new Set(rows.map((r) => r.artworkId).filter(Boolean))] as string[];
     const artworksData = artworkIds.length
-      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: { id: true, title: true } })
+      ? await this.artworks.find({ where: { id: In(artworkIds) }, select: { id: true, title: true, priceKrw: true } })
       : [];
     const artworkMap = new Map(artworksData.map((a) => [a.id, a]));
 
@@ -136,6 +150,7 @@ export class ReservationService {
       bodyPart: r.bodyPart,
       sizePreset: r.sizePreset,
       artworkTitle: r.artworkId ? (artworkMap.get(r.artworkId)?.title ?? null) : null,
+      artworkPriceKrw: r.artworkId ? (artworkMap.get(r.artworkId)?.priceKrw ?? null) : null,
       depositKrw: r.depositKrw,
       depositStatus: r.depositStatus,
       estimatedPriceKrw: r.estimatedPriceKrw,
@@ -223,6 +238,7 @@ export class ReservationService {
       where: {
         artistPageId: artist.id,
         scheduledAt: Between(new Date(from), new Date(to)),
+        status: Not(ReservationStatus.CANCELLED),
       },
       order: { scheduledAt: 'ASC' },
     });
@@ -269,7 +285,19 @@ export class ReservationService {
       reservation.cancelReason = reason ?? null;
       reservation.cancelledAt = new Date();
     }
-    return this.reservations.save(reservation);
+    const saved = await this.reservations.save(reservation);
+    const artist = await this.artists.findOne({ where: { id: saved.artistPageId }, select: { userId: true } });
+    const recipientId = actorId === saved.customerId ? artist?.userId : saved.customerId;
+    if (recipientId) await this.notifications.notify({
+      userId: recipientId,
+      type: 'reservation_status',
+      preference: next === ReservationStatus.COMPLETED ? 'procedureDone' : 'reservationStatus',
+      titleKo: '예약 상태 변경', titleEn: 'Booking status updated',
+      bodyKo: `예약 상태가 ${next}(으)로 변경되었습니다.`, bodyEn: `Your booking status is now ${next}.`,
+      data: { screen: actorId === saved.customerId ? 'ArtistReservation' : 'ReservationManage', reservationId: saved.id },
+      idempotencyKey: `reservation-status:${saved.id}:${next}`,
+    });
+    return saved;
   }
 
   /** 예약금 요청 — 타투이스트가 금액을 지정 */
@@ -340,13 +368,13 @@ export class ReservationService {
     return Object.fromEntries(rows.map((r) => [r.artworkId, r.count]));
   }
 
-  /** 리뷰 작성 가능한 예약 — 확정(confirmed) 또는 완료(completed) 후 14일 이내 */
+  /** 리뷰 작성 가능한 예약 — 완료(completed) 후 14일 이내만 허용 */
   async listReviewable(customerId: string) {
     const since = new Date(Date.now() - 14 * 86_400_000);
     const rows = await this.reservations.find({
       where: {
         customerId,
-        status: In([ReservationStatus.CONFIRMED, ReservationStatus.COMPLETED]),
+        status: ReservationStatus.COMPLETED,
         updatedAt: Between(since, new Date()),
       },
       order: { updatedAt: 'DESC' },

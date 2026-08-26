@@ -42,8 +42,8 @@ export class FirebaseService implements OnModuleInit {
     this.logger.log('Firebase Admin SDK 초기화 완료');
   }
 
-  async sendToToken(fcmToken: string, payload: PushPayload): Promise<void> {
-    if (!this.app) return;
+  async sendToToken(fcmToken: string, payload: PushPayload): Promise<{ sent: boolean; errorCode?: string }> {
+    if (!this.app) return { sent: false, errorCode: 'firebase_not_configured' };
     try {
       await getMessaging(this.app).send({
         token: fcmToken,
@@ -52,14 +52,17 @@ export class FirebaseService implements OnModuleInit {
         apns: { payload: { aps: { sound: 'default', badge: 1 } } },
         android: { priority: 'high', notification: { sound: 'default' } },
       });
+      return { sent: true };
     } catch (err: unknown) {
       this.logger.warn(`[FCM] 발송 실패 token=${fcmToken.slice(0, 20)}…`, err);
+      const errorCode = typeof err === 'object' && err && 'code' in err ? String(err.code) : 'unknown';
+      return { sent: false, errorCode };
     }
   }
 
   /** fcmToken이 null이면 무시 */
-  async sendIfTokenExists(fcmToken: string | null, payload: PushPayload): Promise<void> {
-    if (!fcmToken) return;
-    await this.sendToToken(fcmToken, payload);
+  async sendIfTokenExists(fcmToken: string | null, payload: PushPayload): Promise<{ sent: boolean; errorCode?: string }> {
+    if (!fcmToken) return { sent: false, errorCode: 'missing_token' };
+    return this.sendToToken(fcmToken, payload);
   }
 }

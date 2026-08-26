@@ -7,9 +7,10 @@ import { User } from '../user/domain/user.entity';
 import { ArtistPage } from '../artist/domain/artist.entity';
 import { Artwork } from '../artist/domain/artwork.entity';
 import { AppReservationController } from './presentation/app-reservation.controller';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reservation, User, ArtistPage, Artwork]), ArtistModule],
+  imports: [TypeOrmModule.forFeature([Reservation, User, ArtistPage, Artwork]), ArtistModule, NotificationModule],
   controllers: [AppReservationController],
   providers: [ReservationService],
   exports: [ReservationService],

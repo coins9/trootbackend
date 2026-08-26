@@ -6,6 +6,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import {
   buildCursorPage, type OffsetPage, type OffsetPaginationQuery,
 } from '../../../shared/http/pagination.dto';
+import { NotificationService } from '../../notification/application/notification.service';
 import {
   ShopApplication, ShopPost, ShopPostCategory, ShopPostStatus,
 } from '../domain/shop-post.entity';
@@ -32,6 +33,7 @@ export class ShopService {
     @InjectRepository(ShopPost) private readonly posts: Repository<ShopPost>,
     @InjectRepository(ShopApplication) private readonly applications: Repository<ShopApplication>,
     @InjectRepository(User) private readonly users: Repository<User>,
+    private readonly notifications: NotificationService,
   ) {}
 
   private async attachAuthors(posts: ShopPost[]): Promise<ShopPostWithAuthor[]> {
@@ -146,6 +148,17 @@ export class ShopService {
       this.applications.create({ postId, applicantId, answers, message: message ?? null }),
     );
     await this.posts.increment({ id: postId }, 'applicationCount', 1);
+
+    this.notifications.notify({
+      userId: post.authorId,
+      type: 'shop_application',
+      preference: 'shopApplication',
+      titleKo: '새 지원자가 있습니다', titleEn: 'New applicant received',
+      bodyKo: '공고에 새로운 지원이 접수되었습니다.', bodyEn: 'Someone applied to your shop post.',
+      data: { screen: 'ShopMatching', postId },
+      idempotencyKey: `shop-apply:${postId}:${applicantId}`,
+    }).catch((e) => console.warn('[Notification] shop_application failed', e));
+
     return application;
   }
 

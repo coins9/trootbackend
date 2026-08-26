@@ -6,6 +6,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import { buildCursorPage } from '../../../shared/http/pagination.dto';
 import { ArtistService } from '../../artist/application/artist.service';
 import { ArtistPage } from '../../artist/domain/artist.entity';
+import { NotificationService } from '../../notification/application/notification.service';
 import { Reservation, ReservationStatus } from '../../reservation/domain/reservation.entity';
 import { User } from '../../user/domain/user.entity';
 import { Review } from '../domain/review.entity';
@@ -39,6 +40,7 @@ export class ReviewService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly artistService: ArtistService,
+    private readonly notifications: NotificationService,
   ) {}
 
   /** 여러 작가의 요약 정보를 한 번에 조회 */
@@ -85,7 +87,7 @@ export class ReviewService {
       throw new AppException(ErrorCode.VALIDATION_FAILED, { details: { reason: 'already_reviewed' } });
     }
 
-    return this.dataSource.transaction(async (manager) => {
+    const review = await this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(Review);
 
       const average = Review.computeAverage(
@@ -93,7 +95,7 @@ export class ReviewService {
         command.hygieneScore, command.satisfactionScore,
       );
 
-      const review = await repo.save(
+      const saved = await repo.save(
         repo.create({
           reservationId: command.reservationId,
           authorId: command.authorId,
@@ -110,8 +112,27 @@ export class ReviewService {
       );
 
       await this.recalculateRating(reservation.artistPageId, manager.getRepository(Review));
-      return review;
+      return saved;
     });
+
+    // 알림 실패가 리뷰 저장을 실패시키지 않는다
+    const artist = await this.artists.findOne({
+      where: { id: reservation.artistPageId },
+      select: { userId: true },
+    });
+    if (artist) {
+      this.notifications.notify({
+        userId: artist.userId,
+        type: 'review_created',
+        preference: 'newReply',
+        titleKo: '새 리뷰가 작성되었습니다', titleEn: 'New review received',
+        bodyKo: '고객이 리뷰를 남겼습니다.', bodyEn: 'A customer left a review.',
+        data: { screen: 'ArtistReservation', reviewId: review.id },
+        idempotencyKey: `review-created:${review.id}`,
+      }).catch((e) => console.warn('[Notification] review_created failed', e));
+    }
+
+    return review;
   }
 
   /** 타투이스트 평점 재계산 — 단일 집계 쿼리로 처리 */
@@ -163,12 +184,23 @@ export class ReviewService {
       .createQueryBuilder('r')
       .where('r.authorId = :authorId', { authorId })
       .orderBy('r.createdAt', 'DESC')
+      .addOrderBy('r.id', 'DESC')
       .take(limit + 1);
 
-    if (cursor) qb.andWhere('r.createdAt < :cursor', { cursor: new Date(cursor) });
+    if (cursor) {
+      const [ts, id] = cursor.split('__');
+      if (id) {
+        qb.andWhere('(r.createdAt < :ts OR (r.createdAt = :ts AND r.id < :id))', {
+          ts: new Date(ts),
+          id,
+        });
+      } else {
+        qb.andWhere('r.createdAt < :ts', { ts: new Date(ts) });
+      }
+    }
 
     const rows = await qb.getMany();
-    const page = buildCursorPage(rows, limit, (r) => r.createdAt.toISOString());
+    const page = buildCursorPage(rows, limit, (r) => `${r.createdAt.toISOString()}__${r.id}`);
 
     const artistMap = await this.loadArtistMinis(page.items.map((r) => r.artistPageId));
     const items = page.items.map((r) => ({ ...r, artist: artistMap.get(r.artistPageId) ?? null }));
@@ -217,6 +249,18 @@ export class ReviewService {
 
     review.reply = body;
     review.repliedAt = new Date();
-    return this.reviews.save(review);
+    const saved = await this.reviews.save(review);
+
+    this.notifications.notify({
+      userId: review.authorId,
+      type: 'review_reply',
+      preference: 'newReply',
+      titleKo: '타투이스트가 답글을 남겼습니다', titleEn: 'Artist replied to your review',
+      bodyKo: '내 리뷰에 타투이스트의 답글이 달렸습니다.', bodyEn: 'The artist replied to your review.',
+      data: { screen: 'TattooReview', reviewId: review.id },
+      idempotencyKey: `review-reply:${review.id}`,
+    }).catch((e) => console.warn('[Notification] review_reply failed', e));
+
+    return saved;
   }
 }

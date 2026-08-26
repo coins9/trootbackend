@@ -28,19 +28,36 @@ export class FavoriteService {
   ) {}
 
   /** 토글 — 클라이언트가 현재 상태를 몰라도 되게 한다 */
-  async toggle(userId: string, type: FavoriteType, targetId: string): Promise<{ favorited: boolean }> {
+  async toggle(userId: string, type: FavoriteType, targetId: string): Promise<{ favorited: boolean; likeCount: number }> {
     const existing = await this.favorites.findOne({
       where: { userId, type, targetId },
       select: { id: true },
     });
 
+    let favorited: boolean;
     if (existing) {
       await this.favorites.delete(existing.id);
-      return { favorited: false };
+      favorited = false;
+    } else {
+      await this.favorites.save(this.favorites.create({ userId, type, targetId }));
+      favorited = true;
     }
 
-    await this.favorites.save(this.favorites.create({ userId, type, targetId }));
-    return { favorited: true };
+    if (type === 'shop_post') {
+      if (favorited) {
+        await this.shopPosts.increment({ id: targetId }, 'likeCount', 1);
+      } else {
+        await this.shopPosts.createQueryBuilder()
+          .update()
+          .set({ likeCount: () => 'GREATEST("likeCount" - 1, 0)' })
+          .where('id = :id', { id: targetId })
+          .execute();
+      }
+      const post = await this.shopPosts.findOne({ where: { id: targetId }, select: { likeCount: true } });
+      return { favorited, likeCount: post?.likeCount ?? 0 };
+    }
+
+    return { favorited, likeCount: 0 };
   }
 
   async list(userId: string, type: FavoriteType, cursor: string | undefined, limit: number) {

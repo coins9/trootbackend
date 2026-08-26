@@ -18,6 +18,7 @@ import { ReportModule } from './modules/report/report.module';
 import { StudioModule } from './modules/studio/studio.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UserModule } from './modules/user/user.module';
+import { NotificationModule } from './modules/notification/notification.module';
 import {
   JwtAuthGuard, OnboardingGuard, RolesGuard,
 } from './shared/auth/guards';
@@ -85,6 +86,7 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
     CacheModule,
     SlackModule,
     FirebaseModule,
+    NotificationModule,
     AuthModule,
     UserModule,
     ReportModule,

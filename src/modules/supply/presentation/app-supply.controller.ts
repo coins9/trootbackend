@@ -3,7 +3,8 @@ import {
 } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import {
-  IsArray, IsEmail, IsEnum, IsInt, IsObject, IsOptional, IsString, Length, Min,
+  ArrayMaxSize, ArrayMinSize, IsArray, IsEmail, IsEnum, IsInt, IsObject,
+  IsOptional, IsString, IsUrl, Length, Matches, Max, Min,
 } from 'class-validator';
 import { CurrentUser, Public } from '../../../shared/auth/guards';
 import { CursorPaginationQuery } from '../../../shared/http/pagination.dto';
@@ -32,22 +33,47 @@ class VendorUpdateDto {
   @IsOptional() @IsEmail() contactEmail?: string;
 }
 
-class ProductDto {
-  @IsString() @Length(1, 200) name: string;
-  @IsOptional() @IsString() @Length(1, 100) subtitle?: string;
+class CreateProductDto {
+  @IsString() @Length(2, 200) name: string;
+  @IsString() @Length(2, 100) subtitle: string;
   @IsOptional() @IsString() @Length(1, 200) nameEn?: string;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() descriptionEn?: string;
   @IsEnum(ProductCategory) category: ProductCategory;
   @IsOptional() @IsString() @Length(1, 100) brand?: string;
-  @Type(() => Number) @IsInt() @Min(0) priceKrw: number;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) stock?: number;
-  @IsOptional() @IsArray() images?: string[];
+  @Type(() => Number) @IsInt() @Min(0) @Max(2_147_483_647) priceKrw: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(2_147_483_647) stock?: number;
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10)
+  @IsUrl({ protocols: ['https'], require_protocol: true }, { each: true })
+  images: string[];
   @IsOptional() @IsString() thumbnail?: string;
   @IsOptional() @IsObject() attributes?: Record<string, unknown>;
   @IsOptional() @IsString() @Length(1, 500) externalUrl?: string;
-  @IsOptional() @IsString() @Length(1, 500) openChatUrl?: string;
-  @IsOptional() @IsString() @Length(1, 500) storeUrl?: string;
+  @IsString() @Length(1, 500) @IsUrl({ protocols: ['https'], require_protocol: true })
+  @Matches(/^https:\/\/open\.kakao\.com(?:\/|$)/i) openChatUrl: string;
+  @IsString() @Length(1, 500) @IsUrl({ protocols: ['https'], require_protocol: true })
+  storeUrl: string;
+}
+
+class UpdateProductDto {
+  @IsOptional() @IsString() @Length(2, 200) name?: string;
+  @IsOptional() @IsString() @Length(2, 100) subtitle?: string;
+  @IsOptional() @IsString() @Length(1, 200) nameEn?: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() descriptionEn?: string;
+  @IsOptional() @IsEnum(ProductCategory) category?: ProductCategory;
+  @IsOptional() @IsString() @Length(1, 100) brand?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(2_147_483_647) priceKrw?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(2_147_483_647) stock?: number;
+  @IsOptional() @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10)
+  @IsUrl({ protocols: ['https'], require_protocol: true }, { each: true })
+  images?: string[];
+  @IsOptional() @IsString() @IsUrl({ protocols: ['https'], require_protocol: true }) thumbnail?: string;
+  @IsOptional() @IsObject() attributes?: Record<string, unknown>;
+  @IsOptional() @IsString() @Length(1, 500) @IsUrl({ protocols: ['https'], require_protocol: true }) externalUrl?: string;
+  @IsOptional() @IsString() @Length(1, 500) @IsUrl({ protocols: ['https'], require_protocol: true })
+  @Matches(/^https:\/\/open\.kakao\.com(?:\/|$)/i) openChatUrl?: string;
+  @IsOptional() @IsString() @Length(1, 500) @IsUrl({ protocols: ['https'], require_protocol: true }) storeUrl?: string;
 }
 
 @Controller('app/supplies')
@@ -86,7 +112,7 @@ export class AppSupplyController {
   }
 
   @Post('vendors/me/products')
-  createProduct(@CurrentUser('id') userId: string, @Body() dto: ProductDto) {
+  createProduct(@CurrentUser('id') userId: string, @Body() dto: CreateProductDto) {
     return this.supplyService.createProduct(userId, dto);
   }
 
@@ -94,9 +120,22 @@ export class AppSupplyController {
   updateProduct(
     @CurrentUser('id') userId: string,
     @Param('productId', ParseUUIDPipe) productId: string,
-    @Body() dto: ProductDto,
+    @Body() dto: UpdateProductDto,
   ) {
     return this.supplyService.updateProduct(userId, productId, dto);
+  }
+
+  @Get('vendors/me/products/:productId')
+  myProduct(
+    @CurrentUser('id') userId: string,
+    @Param('productId', ParseUUIDPipe) productId: string,
+  ) {
+    return this.supplyService.getMyProduct(userId, productId);
+  }
+
+  @Post('products/:productId/inquiry')
+  recordProductInquiry(@Param('productId', ParseUUIDPipe) productId: string) {
+    return this.supplyService.incrementProductInquiry(productId);
   }
 
   @Delete('vendors/me/products/:productId')
