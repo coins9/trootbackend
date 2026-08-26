@@ -4,7 +4,7 @@ import {
 import { Type } from 'class-transformer';
 import {
   IsArray, IsEnum, IsInt, IsLatitude, IsLongitude, IsNumber, IsOptional,
-  IsString, Length, Max, Min,
+  IsString, Length, Max, MaxLength, Min, ValidateIf,
 } from 'class-validator';
 import { CurrentUser, Public, Roles } from '../../../shared/auth/guards';
 import { CursorPaginationQuery } from '../../../shared/http/pagination.dto';
@@ -67,9 +67,9 @@ class UpdateArtistPageDto {
 class ArtworkDto {
   @IsOptional() @IsEnum(ArtworkType) type?: ArtworkType;
   @IsString() @Length(1, 200) title: string;
-  @IsOptional() @IsString() @Length(1, 200) titleEn?: string;
-  @IsOptional() @IsString() description?: string;
-  @IsOptional() @IsString() descriptionEn?: string;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsString() @MaxLength(200) titleEn?: string | null;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsString() description?: string | null;
+  @IsOptional() @ValidateIf((_, v) => v !== null) @IsString() descriptionEn?: string | null;
   @IsOptional() @IsArray() images?: string[];
   @IsOptional() @IsString() thumbnail?: string;
   @IsOptional() @IsArray() genres?: string[];
