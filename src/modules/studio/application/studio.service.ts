@@ -7,6 +7,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import { ArtistPage } from '../../artist/domain/artist.entity';
 import { Reservation } from '../../reservation/domain/reservation.entity';
 import { User } from '../../user/domain/user.entity';
+import { PersonalScheduleService } from './personal-schedule.service';
 import { Studio } from '../domain/studio.entity';
 import { StudioMember, StudioRole } from '../domain/studio-member.entity';
 
@@ -32,6 +33,7 @@ export class StudioService {
     @InjectRepository(ArtistPage) private readonly artistPageRepo: Repository<ArtistPage>,
     @InjectRepository(Reservation) private readonly reservationRepo: Repository<Reservation>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly personalScheduleSvc: PersonalScheduleService,
   ) {}
 
   // ── helpers ──────────────────────────────────────────────
@@ -243,9 +245,18 @@ export class StudioService {
       rsvByPageId.set(r.artistPageId, arr);
     }
 
+    const personalEvents = await this.personalScheduleSvc.listByArtistPageIds(artistPageIds, date);
+    const personalByPageId = new Map<string, typeof personalEvents>();
+    for (const pe of personalEvents) {
+      const arr = personalByPageId.get(pe.artistPageId) ?? [];
+      arr.push(pe);
+      personalByPageId.set(pe.artistPageId, arr);
+    }
+
     return members.map((m) => {
       const page = pageByUserId.get(m.userId);
       const rsvList = page ? (rsvByPageId.get(page.id) ?? []) : [];
+      const peList = page ? (personalByPageId.get(page.id) ?? []) : [];
       return {
         memberId: m.id,
         nickname: m.user?.nickname ?? '(미등록)',
@@ -258,6 +269,18 @@ export class StudioService {
           customerName: customerById.get(r.customerId)?.nickname ?? null,
           status: r.status,
           memo: r.memo,
+        })),
+        personalEvents: peList.map((pe) => ({
+          id: pe.id,
+          date: pe.date,
+          startHour: pe.startHour,
+          durationH: pe.durationH,
+          title: pe.title,
+          subtitle: pe.subtitle,
+          kind: pe.kind,
+          status: pe.status,
+          customerName: pe.customerName,
+          bodyPart: pe.bodyPart,
         })),
       };
     });
