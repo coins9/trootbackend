@@ -5,7 +5,7 @@ import {
   IsDateString, IsEnum, IsIn, IsNumber, IsOptional, IsString, Length, Max, Min,
 } from 'class-validator';
 import { CurrentUser } from '../../../shared/auth/guards';
-import { PersonalEventKind, PersonalEventStatus } from '../domain/artist-personal-event.entity';
+import type { PersonalEventKind, PersonalEventStatus, PersonalDepositStatus } from '../domain/artist-personal-event.entity';
 import { PersonalScheduleService } from '../application/personal-schedule.service';
 
 class CreatePersonalEventDto {
@@ -18,7 +18,7 @@ class CreatePersonalEventDto {
   @IsOptional() @IsString() @Length(0, 100) customerName?: string;
   @IsOptional() @IsString() @Length(0, 100) bodyPart?: string;
   @IsOptional() @IsString()                 memo?: string;
-  @IsOptional() @IsIn(['none', 'partial', 'paid']) depositStatus?: string;
+  @IsOptional() @IsIn(['none', 'partial', 'paid']) depositStatus?: PersonalDepositStatus;
   @IsOptional() @IsNumber() @Min(0)         depositAmount?: number;
 }
 
@@ -33,7 +33,7 @@ class UpdatePersonalEventDto {
   @IsOptional() @IsString() @Length(0, 100)    customerName?: string;
   @IsOptional() @IsString() @Length(0, 100)    bodyPart?: string;
   @IsOptional() @IsString()                    memo?: string;
-  @IsOptional() @IsIn(['none', 'partial', 'paid']) depositStatus?: string;
+  @IsOptional() @IsIn(['none', 'partial', 'paid']) depositStatus?: PersonalDepositStatus;
   @IsOptional() @IsNumber() @Min(0)            depositAmount?: number;
 }
 
