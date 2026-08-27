@@ -22,6 +22,11 @@ class ScheduleQuery {
   @IsDateString() date: string;
 }
 
+class ScheduleRangeQuery {
+  @IsDateString() from: string;
+  @IsDateString() to: string;
+}
+
 @Controller('app/studios')
 export class AppStudioController {
   constructor(private readonly studioService: StudioService) {}
@@ -55,6 +60,15 @@ export class AppStudioController {
     @CurrentUser('id') userId: string,
   ) {
     return this.studioService.refreshCode(studioId, userId);
+  }
+
+  @Get(':id/schedule/range')
+  scheduleRange(
+    @Param('id', ParseUUIDPipe) studioId: string,
+    @CurrentUser('id') userId: string,
+    @Query() query: ScheduleRangeQuery,
+  ) {
+    return this.studioService.scheduleRange(studioId, userId, query.from, query.to);
   }
 
   @Get(':id/schedule')

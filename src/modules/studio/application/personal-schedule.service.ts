@@ -41,13 +41,22 @@ export class PersonalScheduleService {
   async listByArtistPageIds(artistPageIds: string[], date: string) {
     if (artistPageIds.length === 0) return [];
     return this.repo.find({
-      where: {
-        artistPageId: In(artistPageIds),
-        date,
-        deletedAt: IsNull(),
-      },
+      where: { artistPageId: In(artistPageIds), date, deletedAt: IsNull() },
       order: { startHour: 'ASC' },
     });
+  }
+
+  async listByArtistPageIdsRange(artistPageIds: string[], from: string, to: string) {
+    if (artistPageIds.length === 0) return [];
+    return this.repo
+      .createQueryBuilder('e')
+      .where('e.artistPageId IN (:...ids)', { ids: artistPageIds })
+      .andWhere('e.date >= :from', { from })
+      .andWhere('e.date <= :to', { to })
+      .andWhere('e.deletedAt IS NULL')
+      .orderBy('e.date', 'ASC')
+      .addOrderBy('e.startHour', 'ASC')
+      .getMany();
   }
 
   async create(userId: string, dto: Partial<ArtistPersonalEvent>) {

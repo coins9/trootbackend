@@ -194,6 +194,68 @@ export class StudioService {
     };
   }
 
+  /** 월간 캘린더용 — 날짜별 팀원 일정 건수만 요약해서 반환 */
+  async scheduleRange(studioId: string, requesterId: string, from: string, to: string) {
+    await this.requireActiveMember(studioId, requesterId);
+
+    const members = await this.memberRepo.find({
+      where: { studioId, role: Not(StudioRole.PENDING), deletedAt: IsNull() },
+      relations: { user: true },
+      order: { joinedAt: 'ASC' },
+    });
+    if (members.length === 0) return [];
+
+    const userIds = members.map((m) => m.userId);
+    const artistPages = await this.artistPageRepo.find({ where: { userId: In(userIds), deletedAt: IsNull() } });
+    const artistPageIds = artistPages.map((ap) => ap.id);
+    const pageByUserId = new Map(artistPages.map((ap) => [ap.userId, ap]));
+
+    const memberByPageId = new Map<string, StudioMember>();
+    for (const m of members) {
+      const page = pageByUserId.get(m.userId);
+      if (page) memberByPageId.set(page.id, m);
+    }
+
+    const rangeStart = new Date(`${from}T00:00:00+09:00`);
+    const rangeEnd = new Date(`${to}T23:59:59+09:00`);
+
+    const reservations = artistPageIds.length > 0
+      ? await this.reservationRepo.find({
+          where: { artistPageId: In(artistPageIds), scheduledAt: Between(rangeStart, rangeEnd), deletedAt: IsNull() },
+        })
+      : [];
+
+    const personalEvents = await this.personalScheduleSvc.listByArtistPageIdsRange(artistPageIds, from, to);
+
+    type DayEntry = { totalCount: number; members: { memberId: string; nickname: string; count: number }[] };
+    const dayMap = new Map<string, DayEntry>();
+
+    const addToDay = (date: string, memberId: string, nickname: string) => {
+      if (!dayMap.has(date)) dayMap.set(date, { totalCount: 0, members: [] });
+      const day = dayMap.get(date)!;
+      day.totalCount++;
+      const mb = day.members.find((x) => x.memberId === memberId);
+      if (mb) mb.count++;
+      else day.members.push({ memberId, nickname, count: 1 });
+    };
+
+    for (const r of reservations) {
+      if (r.status === 'cancelled') continue;
+      const kst = new Date(r.scheduledAt.getTime() + 9 * 3600 * 1000);
+      const date = kst.toISOString().slice(0, 10);
+      const member = memberByPageId.get(r.artistPageId);
+      if (member) addToDay(date, member.id, member.user?.nickname ?? '(미등록)');
+    }
+
+    for (const pe of personalEvents) {
+      if (pe.status === 'cancelled') continue;
+      const member = memberByPageId.get(pe.artistPageId);
+      if (member) addToDay(pe.date, member.id, member.user?.nickname ?? '(미등록)');
+    }
+
+    return Array.from(dayMap.entries()).map(([date, data]) => ({ date, ...data }));
+  }
+
   async schedule(studioId: string, requesterId: string, date: string) {
     await this.requireActiveMember(studioId, requesterId);
 
