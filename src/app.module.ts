@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -29,6 +29,7 @@ import { AllExceptionsFilter } from './shared/exceptions/all-exceptions.filter';
 import { HealthController } from './shared/health/health.controller';
 import { MetaController } from './shared/http/meta.controller';
 import { ResponseInterceptor } from './shared/http/response.interceptor';
+import { ScannerBlockMiddleware } from './shared/http/scanner-block.middleware';
 
 @Module({
   imports: [
@@ -113,4 +114,9 @@ import { ResponseInterceptor } from './shared/http/response.interceptor';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // 스캐너 봇 차단은 라우팅/가드 이전에 최우선 실행되어야 한다
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(ScannerBlockMiddleware).forRoutes('*');
+  }
+}
