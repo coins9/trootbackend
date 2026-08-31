@@ -28,6 +28,7 @@ import { SlackModule } from './shared/slack/slack.module';
 import { AllExceptionsFilter } from './shared/exceptions/all-exceptions.filter';
 import { HealthController } from './shared/health/health.controller';
 import { MetaController } from './shared/http/meta.controller';
+import { AppConfigController } from './shared/http/app-config.controller';
 import { ResponseInterceptor } from './shared/http/response.interceptor';
 import { ScannerBlockMiddleware } from './shared/http/scanner-block.middleware';
 
@@ -103,7 +104,7 @@ import { ScannerBlockMiddleware } from './shared/http/scanner-block.middleware';
     AdminModule,
     UploadModule,
   ],
-  controllers: [HealthController, MetaController],
+  controllers: [HealthController, MetaController, AppConfigController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },

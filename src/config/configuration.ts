@@ -82,6 +82,16 @@ export interface AppConfig {
      */
     behindCloudflare: boolean;
   };
+
+  /**
+   * 앱 버전 게이팅. 앱이 시작 시 /app/config/version 을 조회해
+   * min 미만이면 강제 업데이트, latest 미만이면 권장 업데이트를 띄운다.
+   * 값은 .env 로만 바꾸면 되고 앱/서버 재배포 없이 강제 업데이트를 걸 수 있다.
+   */
+  appVersion: {
+    ios: { min: string; latest: string; storeUrl: string };
+    android: { min: string; latest: string; storeUrl: string };
+  };
 }
 
 const int = (value: string | undefined, fallback: number): number => {
@@ -174,4 +184,17 @@ export default (): AppConfig => ({
       behindCloudflare: bool(process.env.BEHIND_CLOUDFLARE, false),
     };
   })(),
+
+  appVersion: {
+    ios: {
+      min: process.env.IOS_MIN_VERSION ?? '1.0.0',
+      latest: process.env.IOS_LATEST_VERSION ?? '1.0.0',
+      storeUrl: process.env.IOS_STORE_URL ?? 'https://apps.apple.com/app/id6796560858',
+    },
+    android: {
+      min: process.env.ANDROID_MIN_VERSION ?? '1.0.0',
+      latest: process.env.ANDROID_LATEST_VERSION ?? '1.0.0',
+      storeUrl: process.env.ANDROID_STORE_URL ?? 'https://play.google.com/store/apps/details?id=com.troot.app',
+    },
+  },
 });
