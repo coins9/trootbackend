@@ -26,6 +26,7 @@ export interface ArtistListQuery {
 /** 무료 UP 쿨다운 (기획서: 1일 1회 · 24시간) */
 const FREE_UP_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const SELECTED_MASTER_LIMIT = 50;
+const ROOTS_PICK_LIMIT = 30;
 
 @Injectable()
 export class ArtistService {
@@ -43,6 +44,17 @@ export class ArtistService {
         where: { isSelectedMaster: true },
         order: { rating: 'DESC' },
         take: SELECTED_MASTER_LIMIT,
+      }),
+    );
+  }
+
+  /** Root's Pick — Selected Master 와 독립된 편집 큐레이션 */
+  async getRootsPick(): Promise<ArtistPage[]> {
+    return this.cache.wrap(CacheKey.rootsPick(), CacheTtl.AGGREGATE, () =>
+      this.artists.find({
+        where: { isRootsPick: true },
+        order: { rating: 'DESC' },
+        take: ROOTS_PICK_LIMIT,
       }),
     );
   }
@@ -142,6 +154,7 @@ export class ArtistService {
     const { lat, lng, ...rest } = patch as any;
     delete rest.tier;
     delete rest.isSelectedMaster;
+    delete rest.isRootsPick;
     delete rest.rating;
     delete rest.reviewCount;
 
@@ -155,7 +168,13 @@ export class ArtistService {
       );
     }
 
-    await this.cache.del(CacheKey.artistDetail(artist.id));
+    // [16] 프로필/배경 수정이 홈 마스터 레일·Root's Pick 목록 캐시에도 반영되도록 함께 무효화.
+    // (기존엔 artistDetail 만 지워 stale 커버/프로필을 계속 노출)
+    await this.cache.del(
+      CacheKey.artistDetail(artist.id),
+      CacheKey.selectedMasters(),
+      CacheKey.rootsPick(),
+    );
     return saved;
   }
 
@@ -183,6 +202,8 @@ export class ArtistService {
   async listArtworks(artistPageId: string, cursor: string | undefined, limit: number) {
     const qb = this.artworks
       .createQueryBuilder('w')
+      // [19] 작품 상세의 작가 카드가 채워지도록 artist 관계를 함께 로드
+      .leftJoinAndSelect('w.artist', 'a')
       .where('w.artistPageId = :artistPageId', { artistPageId })
       .andWhere('w.status = :status', { status: ArtworkStatus.PUBLISHED })
       .orderBy('w.createdAt', 'DESC')
@@ -214,6 +235,13 @@ export class ArtistService {
 
     if (filter?.countryCode) {
       qb.andWhere('a.countryCode = :countryCode', { countryCode: filter.countryCode });
+    } else if (filter?.regionSido && filter?.regionSigungu) {
+      // 시/도 + 시/군/구를 함께 AND 로 매칭해야 '중구·남구·기타'처럼
+      // 여러 시/도에 중복되는 구 이름이 다른 지역까지 잘못 매칭되지 않는다
+      qb.andWhere('a.regionSido = :regionSido AND a.regionSigungu = :regionSigungu', {
+        regionSido: filter.regionSido,
+        regionSigungu: filter.regionSigungu,
+      });
     } else if (filter?.regionSigungu) {
       qb.andWhere('a.regionSigungu = :regionSigungu', { regionSigungu: filter.regionSigungu });
     } else if (filter?.regionSido) {
@@ -341,6 +369,25 @@ export class ArtistService {
     return saved;
   }
 
+  async setRootsPick(artistId: string, value: boolean): Promise<ArtistPage> {
+    const artist = await this.artists.findOne({ where: { id: artistId } });
+    if (!artist) throw new AppException(ErrorCode.ARTIST_NOT_FOUND);
+
+    if (value && !artist.isRootsPick) {
+      const count = await this.artists.count({ where: { isRootsPick: true } });
+      if (count >= ROOTS_PICK_LIMIT) {
+        throw new AppException(ErrorCode.SELECTED_MASTER_LIMIT_EXCEEDED, {
+          details: { limit: ROOTS_PICK_LIMIT, current: count },
+        });
+      }
+    }
+
+    artist.isRootsPick = value;
+    const saved = await this.artists.save(artist);
+    await this.cache.del(CacheKey.rootsPick(), CacheKey.artistDetail(artistId));
+    return saved;
+  }
+
   async setTier(artistId: string, tier: ArtistTier): Promise<ArtistPage> {
     const result = await this.artists.update(artistId, { tier });
     if (!result.affected) throw new AppException(ErrorCode.ARTIST_NOT_FOUND);
@@ -355,5 +402,6 @@ export class ArtistService {
   }
 
   static readonly SELECTED_MASTER_LIMIT = SELECTED_MASTER_LIMIT;
+  static readonly ROOTS_PICK_LIMIT = ROOTS_PICK_LIMIT;
   static readonly ADMIN_ROLE = UserRole.ADMIN;
 }

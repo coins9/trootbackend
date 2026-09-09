@@ -89,6 +89,13 @@ export class AppArtistController {
     return this.artistService.getSelectedMasters();
   }
 
+  /** Root's Pick — Selected Master 와 별개의 편집 큐레이션 */
+  @Public()
+  @Get('roots-pick')
+  rootsPick() {
+    return this.artistService.getRootsPick();
+  }
+
   @Public()
   @Get()
   list(@Query() query: ArtistListQueryDto) {

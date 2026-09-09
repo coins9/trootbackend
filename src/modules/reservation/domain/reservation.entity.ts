@@ -44,14 +44,25 @@ export class Reservation extends BaseEntity {
   @Column({ type: 'int', default: 60 })
   durationMinutes: number;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  // 복수 부위/크기를 콤마로 결합해 저장하므로 길이를 넉넉히 둔다
+  @Column({ type: 'varchar', length: 255, nullable: true })
   bodyPart: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   sizePreset: string | null;
 
   @Column({ type: 'text', nullable: true })
   memo: string | null;
+
+  /** 고객 연락 수단 — 오픈톡 이탈 대비 예약과 함께 저장(2중 안전장치). 전부 선택 사항 */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  customerContact: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  customerInstagram: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  customerOpenChat: string | null;
 
   @Column({ type: 'jsonb', default: () => "'[]'" })
   referenceImages: string[];

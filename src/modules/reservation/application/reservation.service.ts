@@ -22,6 +22,9 @@ export interface ArtistReservationView {
   bodyPart: string | null;
   sizePreset: string | null;
   memo: string | null;
+  customerContact: string | null;
+  customerInstagram: string | null;
+  customerOpenChat: string | null;
   referenceImages: string[];
   estimatedPriceKrw: number | null;
   depositKrw: number;
@@ -41,6 +44,9 @@ export interface CreateReservationCommand {
   bodyPart?: string;
   sizePreset?: string;
   memo?: string;
+  customerContact?: string;
+  customerInstagram?: string;
+  customerOpenChat?: string;
   referenceImages?: string[];
 }
 
@@ -212,6 +218,9 @@ export class ReservationService {
       bodyPart: r.bodyPart,
       sizePreset: r.sizePreset,
       memo: r.memo,
+      customerContact: r.customerContact,
+      customerInstagram: r.customerInstagram,
+      customerOpenChat: r.customerOpenChat,
       referenceImages: r.referenceImages,
       estimatedPriceKrw: r.estimatedPriceKrw,
       depositKrw: r.depositKrw,

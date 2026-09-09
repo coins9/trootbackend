@@ -13,6 +13,10 @@ export enum ArtistTier {
 @Index('idx_artist_selected_master', ['isSelectedMaster', 'rating'], {
   where: '"isSelectedMaster" = true AND "deletedAt" IS NULL',
 })
+// Root's Pick 큐레이션 — Selected Master 와 별개의 편집 큐레이션
+@Index('idx_artist_roots_pick', ['isRootsPick', 'rating'], {
+  where: '"isRootsPick" = true AND "deletedAt" IS NULL',
+})
 // 지역 + 평점 정렬 목록
 @Index('idx_artist_region_rating', ['regionSido', 'regionSigungu', 'rating'])
 // UP 정렬 목록 (updatedAt 기반)
@@ -47,6 +51,10 @@ export class ArtistPage extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   isSelectedMaster: boolean;
+
+  /** Root's Pick 큐레이션 — Selected Master 와 독립적으로 관리 */
+  @Column({ type: 'boolean', default: false })
+  isRootsPick: boolean;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   regionSido: string | null;

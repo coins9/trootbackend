@@ -14,6 +14,10 @@ class SelectedMasterDto {
   @IsBoolean() value: boolean;
 }
 
+class RootsPickDto {
+  @IsBoolean() value: boolean;
+}
+
 class TierDto {
   @IsEnum(ArtistTier) tier: ArtistTier;
 }
@@ -36,6 +40,16 @@ export class AdminArtistController {
   @Patch(':id/selected-master')
   setMaster(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SelectedMasterDto) {
     return this.artistService.setSelectedMaster(id, dto.value);
+  }
+
+  @Get('roots-pick')
+  rootsPick() {
+    return this.artistService.getRootsPick();
+  }
+
+  @Patch(':id/roots-pick')
+  setRootsPick(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RootsPickDto) {
+    return this.artistService.setRootsPick(id, dto.value);
   }
 
   @Patch(':id/tier')

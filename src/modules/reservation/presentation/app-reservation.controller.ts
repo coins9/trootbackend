@@ -16,9 +16,12 @@ class CreateReservationDto {
   @IsOptional() @IsUUID() artworkId?: string;
   @IsDateString() scheduledAt: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(15) durationMinutes?: number;
-  @IsOptional() @IsString() @Length(1, 50) bodyPart?: string;
-  @IsOptional() @IsString() @Length(1, 50) sizePreset?: string;
+  @IsOptional() @IsString() @Length(1, 255) bodyPart?: string;
+  @IsOptional() @IsString() @Length(1, 255) sizePreset?: string;
   @IsOptional() @IsString() @Length(1, 1000) memo?: string;
+  @IsOptional() @IsString() @Length(1, 100) customerContact?: string;
+  @IsOptional() @IsString() @Length(1, 100) customerInstagram?: string;
+  @IsOptional() @IsString() @Length(1, 255) customerOpenChat?: string;
   @IsOptional() @IsArray() referenceImages?: string[];
 }
 

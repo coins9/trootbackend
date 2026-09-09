@@ -7,6 +7,7 @@ export const CacheKey = {
   artistDetail: (id: string) => `artist:detail:${id}`,
   artistList: (hash: string) => `artist:list:${hash}`,
   selectedMasters: () => 'artist:masters',
+  rootsPick: () => 'artist:roots-pick',
   userProfile: (id: string) => `user:profile:${id}`,
   adminDashboard: () => 'admin:dashboard',
   reportPendingCount: () => 'report:pending:count',
