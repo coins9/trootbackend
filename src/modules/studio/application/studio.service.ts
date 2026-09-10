@@ -43,6 +43,7 @@ export class StudioService {
       id: s.id,
       name: s.name,
       address: s.address,
+      info: s.info,
       lat: s.lat,
       lng: s.lng,
       ownerId: s.ownerId,
@@ -50,6 +51,24 @@ export class StudioService {
       inviteCodeExpiresAt: s.inviteCodeExpiresAt?.toISOString() ?? null,
       createdAt: s.createdAt.toISOString(),
     };
+  }
+
+  /** 샵오너만 주소 밑 정보 등 스튜디오 정보를 수정 */
+  async updateMine(userId: string, patch: { name?: string; address?: string; info?: string }) {
+    const member = await this.memberRepo.findOne({
+      where: { userId, role: Not(StudioRole.PENDING), deletedAt: IsNull() },
+    });
+    if (!member) throw new AppException(ErrorCode.STUDIO_NOT_FOUND);
+    if (member.role !== StudioRole.OWNER) throw new AppException(ErrorCode.STUDIO_FORBIDDEN);
+
+    const studio = await this.studioRepo.findOne({ where: { id: member.studioId, deletedAt: IsNull() } });
+    if (!studio) throw new AppException(ErrorCode.STUDIO_NOT_FOUND);
+
+    if (patch.name !== undefined) studio.name = patch.name.trim();
+    if (patch.address !== undefined) studio.address = patch.address.trim();
+    if (patch.info !== undefined) studio.info = patch.info.trim() || null;
+    await this.studioRepo.save(studio);
+    return this.mapStudio(studio);
   }
 
   private mapMember(m: StudioMember) {

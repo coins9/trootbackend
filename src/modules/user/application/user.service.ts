@@ -15,6 +15,7 @@ export interface UserProfile {
   nickname: string | null;
   email: string | null;
   profileImage: string | null;
+  shopProfileImage: string | null;
   activeRole: UserRole;
   roles: UserRole[];
   onboarded: boolean;
@@ -37,7 +38,7 @@ export class UserService {
         const user = await this.users.findOne({
           where: { id: userId },
           select: {
-            id: true, nickname: true, email: true, profileImage: true,
+            id: true, nickname: true, email: true, profileImage: true, shopProfileImage: true,
             activeRole: true, roles: true, onboarded: true, language: true, status: true,
           },
         });
@@ -119,6 +120,13 @@ export class UserService {
     return this.getProfile(userId);
   }
 
+  async updateShopProfileImage(userId: string, shopProfileImage: string): Promise<UserProfile> {
+    const result = await this.users.update(userId, { shopProfileImage });
+    if (!result.affected) throw new AppException(ErrorCode.USER_NOT_FOUND);
+    await this.invalidate(userId);
+    return this.getProfile(userId);
+  }
+
   async updateFcmToken(userId: string, fcmToken: string, platform: 'ios' | 'android'): Promise<void> {
     await this.users.update(userId, { fcmToken, fcmPlatform: platform });
   }
@@ -165,6 +173,7 @@ export class UserService {
       nickname: user.nickname,
       email: user.email,
       profileImage: user.profileImage,
+      shopProfileImage: user.shopProfileImage,
       activeRole: user.activeRole,
       roles: user.roles,
       onboarded: user.onboarded,

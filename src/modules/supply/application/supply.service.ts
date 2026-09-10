@@ -152,7 +152,7 @@ export class SupplyService {
     userId: string,
     patch: {
       openChatUrl?: string; name?: string; businessNo?: string;
-      ecommerceRegNo?: string; contactEmail?: string;
+      ecommerceRegNo?: string; contactEmail?: string; profileImage?: string;
     },
   ): Promise<Vendor> {
     const vendor = await this.getMyVendor(userId);
@@ -163,6 +163,7 @@ export class SupplyService {
     if (patch.businessNo !== undefined) vendor.businessNo = patch.businessNo.trim();
     if (patch.ecommerceRegNo !== undefined) vendor.ecommerceRegNo = patch.ecommerceRegNo.trim() || null;
     if (patch.contactEmail !== undefined) vendor.contactEmail = patch.contactEmail.trim();
+    if (patch.profileImage !== undefined) vendor.profileImage = patch.profileImage.trim() || null;
     return this.vendors.save(vendor);
   }
 

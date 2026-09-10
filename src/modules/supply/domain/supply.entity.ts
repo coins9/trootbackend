@@ -64,6 +64,10 @@ export class Vendor extends BaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   openChatUrl: string | null;
 
+  /** 용품샵(벤더) 전용 프로필 사진 — 프로필 화면 모드별 사진 분리 */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  profileImage: string | null;
+
   @Column({ type: 'int', default: 0 })
   inquiryCount: number;
 }

@@ -43,6 +43,10 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   profileImage: string | null;
 
+  /** 샵앤매칭 모드 전용 프로필 사진 — 프로필 화면 모드별 사진 분리 */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  shopProfileImage: string | null;
+
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   activeRole: UserRole;
 

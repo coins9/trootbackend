@@ -9,6 +9,10 @@ export class Studio extends BaseEntity {
   @Column({ type: 'text' })
   address: string;
 
+  /** 샵 소개·영업시간·공지 등 오너가 주소 아래에 노출하는 자유 정보 */
+  @Column({ type: 'text', nullable: true })
+  info: string | null;
+
   @Column({ type: 'double precision', nullable: true })
   lat: number | null;
 

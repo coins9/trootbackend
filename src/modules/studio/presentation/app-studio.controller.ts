@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Get, Param, ParseUUIDPipe, Post, Query,
+  Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query,
 } from '@nestjs/common';
 import {
   IsDateString, IsNumber, IsOptional, IsString, Length, Max, Min,
@@ -16,6 +16,13 @@ class RegisterStudioDto {
 
 class JoinStudioDto {
   @IsString() @Length(6, 6) code: string;
+}
+
+class UpdateStudioDto {
+  @IsOptional() @IsString() @Length(2, 100) name?: string;
+  @IsOptional() @IsString() @Length(2, 500) address?: string;
+  // 주소 밑 자유 정보(소개·영업시간·공지). 빈 문자열이면 해제
+  @IsOptional() @IsString() @Length(0, 2000) info?: string;
 }
 
 class ScheduleQuery {
@@ -39,6 +46,12 @@ export class AppStudioController {
   @Post()
   register(@CurrentUser('id') userId: string, @Body() dto: RegisterStudioDto) {
     return this.studioService.register(userId, dto);
+  }
+
+  /** 샵오너 전용 — 주소 밑 정보(소개·영업시간·공지) 등 수정 */
+  @Patch('me')
+  updateMine(@CurrentUser('id') userId: string, @Body() dto: UpdateStudioDto) {
+    return this.studioService.updateMine(userId, dto);
   }
 
   @Post('join')

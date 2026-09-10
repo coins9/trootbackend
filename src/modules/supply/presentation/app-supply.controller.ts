@@ -31,6 +31,7 @@ class VendorUpdateDto {
   @IsOptional() @IsString() @Length(1, 50) businessNo?: string;
   @IsOptional() @IsString() @Length(0, 100) ecommerceRegNo?: string;
   @IsOptional() @IsEmail() contactEmail?: string;
+  @IsOptional() @IsString() @Length(1, 500) profileImage?: string;
 }
 
 class CreateProductDto {

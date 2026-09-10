@@ -38,6 +38,12 @@ class ProfileImageDto {
   profileImage: string;
 }
 
+class ShopProfileImageDto {
+  @IsString()
+  @Length(1, 500)
+  shopProfileImage: string;
+}
+
 class FcmTokenDto {
   @IsString()
   @MaxLength(500)
@@ -83,6 +89,12 @@ export class AppUserController {
   @Patch('me/profile-image')
   updateProfileImage(@CurrentUser('id') userId: string, @Body() dto: ProfileImageDto) {
     return this.userService.updateProfileImage(userId, dto.profileImage);
+  }
+
+  /** 샵앤매칭 모드 전용 프로필 사진 */
+  @Patch('me/shop-image')
+  updateShopProfileImage(@CurrentUser('id') userId: string, @Body() dto: ShopProfileImageDto) {
+    return this.userService.updateShopProfileImage(userId, dto.shopProfileImage);
   }
 
   @Patch('me/language')
