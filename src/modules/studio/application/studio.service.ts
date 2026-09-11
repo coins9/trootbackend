@@ -110,6 +110,25 @@ export class StudioService {
     return this.mapStudio(studio);
   }
 
+  /**
+   * 공개 프로필용 — 해당 유저가 속한(오너/아티스트) 샵의 공개 정보(이름·주소·소개)만 반환.
+   * 초대코드 등 운영 정보는 제외한다. 없으면 null.
+   */
+  async publicByUser(userId: string) {
+    const member = await this.memberRepo.findOne({
+      where: { userId, role: Not(StudioRole.PENDING), deletedAt: IsNull() },
+    });
+    if (!member) return null;
+
+    const studio = await this.studioRepo.findOne({
+      where: { id: member.studioId, deletedAt: IsNull() },
+      select: { id: true, name: true, address: true, info: true },
+    });
+    if (!studio) return null;
+
+    return { id: studio.id, name: studio.name, address: studio.address, info: studio.info };
+  }
+
   async register(userId: string, dto: { name: string; address: string; lat?: number; lng?: number }) {
     const existing = await this.memberRepo.findOne({
       where: { userId, role: Not(StudioRole.PENDING), deletedAt: IsNull() },

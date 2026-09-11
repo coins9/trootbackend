@@ -4,7 +4,7 @@ import {
 import {
   IsDateString, IsNumber, IsOptional, IsString, Length, Max, Min,
 } from 'class-validator';
-import { CurrentUser } from '../../../shared/auth/guards';
+import { CurrentUser, Public } from '../../../shared/auth/guards';
 import { StudioService } from '../application/studio.service';
 
 class RegisterStudioDto {
@@ -41,6 +41,13 @@ export class AppStudioController {
   @Get('me')
   mine(@CurrentUser('id') userId: string) {
     return this.studioService.mine(userId);
+  }
+
+  /** 공개 프로필(타투이스트 안내)용 — 해당 유저가 속한 샵의 이름·주소·소개 */
+  @Public()
+  @Get('by-user/:userId')
+  publicByUser(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.studioService.publicByUser(userId);
   }
 
   @Post()
