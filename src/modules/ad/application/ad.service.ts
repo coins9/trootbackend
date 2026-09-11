@@ -18,7 +18,14 @@ import {
 const CARD_AD_SLOT_PER_SEGMENT = 8;
 
 export interface AdSegment {
+  /** 정확한 지역 코드(seoul_gangnam 등) — 세부 지역까지 지정된 경우 */
   regionKey?: string | null;
+  /**
+   * 시/도 계열 프리픽스(예: 'seoul') — 도시만 선택하고 세부 지역 미지정 시 사용.
+   * 해당 계열(seoul_gangnam·seoul_hongdae…) 광고를 모두 노출한다.
+   * regionKey 가 있으면 무시된다.
+   */
+  regionFamily?: string | null;
   genreKey?: string | null;
 }
 
@@ -41,6 +48,24 @@ export class AdService {
 
   getProducts() {
     return AD_PRODUCTS;
+  }
+
+  /**
+   * 세그먼트 지역 필터를 쿼리에 적용한다.
+   *  - regionKey(정확한 코드) 있으면 → 해당 지역 + 전국(null)
+   *  - regionFamily(시/도 계열) 있으면 → 그 계열 전체(seoul_%) + 전국(null)
+   *  - 둘 다 없으면 → 필터 미적용(전체)
+   * 앱과 광고가 같은 지역 코드 어휘(regions.ts)를 쓰도록 강제하는 지점.
+   */
+  private applyRegionFilter(qb: import('typeorm').SelectQueryBuilder<AdCampaign>, segment: AdSegment): void {
+    if (segment.regionKey) {
+      qb.andWhere('(c.regionKey = :region OR c.regionKey IS NULL)', { region: segment.regionKey });
+    } else if (segment.regionFamily) {
+      qb.andWhere(
+        '(c.regionKey = :famBase OR c.regionKey LIKE :famPrefix OR c.regionKey IS NULL)',
+        { famBase: segment.regionFamily, famPrefix: `${segment.regionFamily}\\_%` },
+      );
+    }
   }
 
   /**
@@ -175,11 +200,7 @@ export class AdService {
       .andWhere('c.status = :status', { status: CampaignStatus.ACTIVE })
       .andWhere('(c.expiresAt IS NULL OR c.expiresAt > now())');
 
-    if (segment.regionKey) {
-      // 지역 지정 요청 → 해당 지역 광고 + 전국(null) 광고 모두 포함
-      qb.andWhere('(c.regionKey = :region OR c.regionKey IS NULL)', { region: segment.regionKey });
-    }
-    // else: 지역 미지정 → 모든 지역 광고 노출 (필터 없음)
+    this.applyRegionFilter(qb, segment);
 
     if (segment.genreKey) {
       qb.andWhere('(c.genreKey = :genre OR c.genreKey IS NULL)', { genre: segment.genreKey });
@@ -274,12 +295,7 @@ export class AdService {
       .andWhere('c.status = :status', { status: CampaignStatus.ACTIVE })
       .andWhere('(c.expiresAt IS NULL OR c.expiresAt > now())');
 
-    if (segment.regionKey) {
-      qb.andWhere('(c.regionKey = :region OR c.regionKey IS NULL)', {
-        region: segment.regionKey,
-      });
-    }
-    // else: 지역 미지정 → 모든 광고 포함 (필터 없음)
+    this.applyRegionFilter(qb, segment);
 
     if (segment.genreKey) {
       qb.andWhere('(c.genreKey = :genre OR c.genreKey IS NULL)', {

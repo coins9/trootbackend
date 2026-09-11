@@ -23,11 +23,13 @@ class ServingQuery {
   @IsEnum(AdPlacement) placement: AdPlacement;
   @IsEnum(AdType) type: AdType;
   @IsOptional() @IsString() @Length(1, 50) regionKey?: string;
+  @IsOptional() @IsString() @Length(1, 30) regionFamily?: string;
   @IsOptional() @IsString() @Length(1, 50) genreKey?: string;
 }
 
 class ServingArtworksQuery {
   @IsOptional() @IsString() @Length(1, 50) regionKey?: string;
+  @IsOptional() @IsString() @Length(1, 30) regionFamily?: string;
   @IsOptional() @IsString() @Length(1, 50) genreKey?: string;
 }
 
@@ -53,6 +55,7 @@ export class AppAdController {
   serving(@Query() q: ServingQuery) {
     return this.adService.getServingAds(q.placement, q.type, {
       regionKey: q.regionKey,
+      regionFamily: q.regionFamily,
       genreKey: q.genreKey,
     });
   }
@@ -63,6 +66,7 @@ export class AppAdController {
   servingArtworks(@Query() q: ServingArtworksQuery) {
     return this.adService.getActiveArtworkAds({
       regionKey: q.regionKey,
+      regionFamily: q.regionFamily,
       genreKey: q.genreKey,
     });
   }

@@ -361,6 +361,19 @@ export class ReservationService {
     };
   }
 
+  /**
+   * 예약 요청함 뱃지 — 아직 응답하지 않은(REQUESTED) 요청 수.
+   * 홈/타투이스트 허브의 빨간 점 표시에 사용한다.
+   */
+  async pendingRequestCount(userId: string): Promise<{ count: number }> {
+    const artist = await this.artistService.getByUserId(userId).catch(() => null);
+    if (!artist) return { count: 0 };
+    const count = await this.reservations.count({
+      where: { artistPageId: artist.id, status: ReservationStatus.REQUESTED },
+    });
+    return { count };
+  }
+
   /** 광고 및 통계 관리 화면 — 작품별 예약 요청(문의) 건수 */
   async countByArtwork(userId: string): Promise<Record<string, number>> {
     const artist = await this.artistService.getByUserId(userId);

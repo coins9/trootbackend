@@ -91,6 +91,13 @@ export class AppReservationController {
     return this.reservationService.countByArtwork(userId);
   }
 
+  /** 예약 요청함 빨간 점 — 미응답(REQUESTED) 요청 수 */
+  @Get('artist/pending-count')
+  @Roles(UserRole.TATTOOIST, UserRole.ADMIN)
+  pendingCount(@CurrentUser('id') userId: string) {
+    return this.reservationService.pendingRequestCount(userId);
+  }
+
   @Get(':id')
   detail(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('id') userId: string) {
     return this.reservationService.getDetail(id, userId);

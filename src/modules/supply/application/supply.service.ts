@@ -6,6 +6,7 @@ import { ErrorCode } from '../../../shared/exceptions/error-code';
 import {
   buildCursorPage, type OffsetPage, type OffsetPaginationQuery,
 } from '../../../shared/http/pagination.dto';
+import { NotificationService } from '../../notification/application/notification.service';
 import {
   Product, ProductCategory, Settlement, SettlementStatus, Vendor, VendorStatus,
 } from '../domain/supply.entity';
@@ -25,6 +26,7 @@ export class SupplyService {
     @InjectRepository(Product) private readonly products: Repository<Product>,
     @InjectRepository(Settlement) private readonly settlements: Repository<Settlement>,
     private readonly dataSource: DataSource,
+    private readonly notifications: NotificationService,
   ) {}
 
   private normalizeProductInput(input: Partial<Product>): Partial<Product> {
@@ -235,9 +237,22 @@ export class SupplyService {
   }
 
   async incrementProductInquiry(productId: string): Promise<{ tracked: boolean }> {
-    const product = await this.products.findOne({ where: { id: productId, isActive: true }, select: { id: true, vendorId: true } });
+    const product = await this.products.findOne({ where: { id: productId, isActive: true }, select: { id: true, vendorId: true, name: true } });
     if (!product) throw new AppException(ErrorCode.NOT_FOUND, { details: { productId } });
     await this.vendors.increment({ id: product.vendorId }, 'inquiryCount', 1);
+
+    // 판매자에게 상품 문의(구매 관심) 알림 — 모든 상호작용을 판매자가 인지하도록
+    const vendor = await this.vendors.findOne({ where: { id: product.vendorId }, select: { id: true, userId: true } });
+    if (vendor) {
+      this.notifications.notify({
+        userId: vendor.userId,
+        type: 'product_inquiry',
+        preference: 'shopApplication',
+        titleKo: '상품 문의가 도착했습니다', titleEn: 'New product inquiry',
+        bodyKo: `'${product.name}' 상품에 새로운 문의가 있습니다.`, bodyEn: 'Someone is interested in your product.',
+        data: { screen: 'TattooSupplyDetail', productId: product.id },
+      }).catch((e) => console.warn('[Notification] product_inquiry failed', e));
+    }
     return { tracked: true };
   }
 

@@ -25,6 +25,15 @@ export interface NotifyCommand {
   idempotencyKey?: string;
 }
 
+/**
+ * "이 토큰은 더 이상 유효하지 않다"는 FCM 오류 코드 — 발견 시 소프트 삭제해 반복 실패를 막는다.
+ * third-party-auth-error(APNs 인증 실패)는 토큰이 아니라 서버(Firebase↔APNs) 설정 문제이므로 제외.
+ */
+const DEAD_TOKEN_CODES = new Set<string>([
+  'messaging/registration-token-not-registered',
+  'messaging/invalid-registration-token',
+]);
+
 const DEFAULTS: Record<NotificationPreferenceKey, boolean> = {
   reservationStatus: true,
   reservationConfirm: true,
@@ -144,6 +153,14 @@ export class NotificationService {
     const failures = results.filter((result) => !result.sent);
     notification.pushError = failures.length ? failures.map((result) => result.errorCode ?? 'unknown').join(',') : null;
     await this.notifications.save(notification);
+
+    // 죽은 토큰(재설치·만료)만 정리해 반복 실패·전송 낭비를 막는다.
+    // ⚠️ third-party-auth-error(APNs 인증 실패)는 토큰이 아니라 서버 설정 문제이므로 삭제하지 않는다.
+    const deadTokenIds = tokens
+      .filter((_, i) => DEAD_TOKEN_CODES.has(results[i]?.errorCode ?? ''))
+      .map((token) => token.id);
+    if (deadTokenIds.length) await this.tokens.softDelete(deadTokenIds);
+
     return notification;
   }
 }
