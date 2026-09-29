@@ -8,6 +8,7 @@ import {
   OffsetPage, OffsetPaginationQuery,
 } from '../../../shared/http/pagination.dto';
 import { SlackService } from '../../../shared/slack/slack.service';
+import { ArtistPage } from '../../artist/domain/artist.entity';
 import { User, UserStatus } from '../../user/domain/user.entity';
 import {
   Report, ReportReason, ReportStatus, ReportTargetType, SANCTION_THRESHOLD,
@@ -98,19 +99,44 @@ export class ReportService {
       await this.cache.del(CacheKey.reportPendingCount(), CacheKey.adminDashboard());
       if (command.targetUserId) await this.cache.del(`auth:user:${command.targetUserId}`);
 
-      // 신고자 닉네임까지 조회해 Slack 에서 누가 누굴 신고했는지 바로 식별 가능하게 한다
+      // Slack 식별 정보: 유저 닉네임 + 활동명(pageName) 둘 다 붙인다.
+      const artistRepo = manager.getRepository(ArtistPage);
+      const pageNameBy = async (
+        where: { id: string } | { userId: string },
+      ): Promise<string | null> =>
+        (await artistRepo.findOne({ where, select: { pageName: true } }))?.pageName ?? null;
+
       const reporter = await userRepo.findOne({
         where: { id: command.reporterId },
         select: { id: true, nickname: true },
       });
-      const withName = (nick: string | null, id: string) => (nick ? `${nick} (id=${id})` : `id=${id}`);
+      const reporterPageName = await pageNameBy({ userId: command.reporterId });
+
+      // 피신고자 활동명: targetId(=artistPageId)로 우선 조회, 없으면 targetUserId 로 조회
+      let targetPageName = await pageNameBy({ id: command.targetId });
+      if (!targetPageName && command.targetUserId) {
+        targetPageName = await pageNameBy({ userId: command.targetUserId });
+      }
+
+      // "닉네임 · 활동명 XXX (id=…)" 형태. 둘 다 없으면 유형(대상id)로 폴백.
+      const fmt = (nick: string | null, page: string | null, id: string): string => {
+        const label = [nick, page ? `활동명 ${page}` : null].filter(Boolean).join(' · ');
+        return label ? `${label} (id=${id})` : `id=${id}`;
+      };
+
+      let targetDisplay: string;
+      if (command.targetUserId) {
+        targetDisplay = fmt(targetNickname, targetPageName, command.targetUserId);
+      } else if (targetPageName) {
+        targetDisplay = fmt(null, targetPageName, command.targetId);
+      } else {
+        targetDisplay = `${command.targetType}(${command.targetId})`;
+      }
 
       // Slack 알림 — fire & forget (실패해도 신고 접수에 영향 없음)
       this.slack.sendReport({
-        reporterDisplay: withName(reporter?.nickname ?? null, command.reporterId),
-        targetDisplay: command.targetUserId
-          ? withName(targetNickname, command.targetUserId)
-          : `${command.targetType}(${command.targetId})`,
+        reporterDisplay: fmt(reporter?.nickname ?? null, reporterPageName, command.reporterId),
+        targetDisplay,
         reason: command.reason,
         targetType: command.targetType,
         detail: command.detail,
