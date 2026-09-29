@@ -11,9 +11,12 @@ export interface SlackBlock {
 export class SlackService {
   private readonly logger = new Logger(SlackService.name);
   private readonly webhookReport: string | undefined;
+  private readonly adminReportsUrl: string | undefined;
 
   constructor(private readonly config: ConfigService) {
     this.webhookReport = this.config.get<string>('slack.webhookReport');
+    const adminDomain = this.config.get<string>('network.adminDomain');
+    this.adminReportsUrl = adminDomain ? `https://${adminDomain}/reports` : undefined;
     if (!this.webhookReport) {
       this.logger.warn('SLACK_WEBHOOK_REPORT 미설정 — 신고 알림 비활성화');
     }
@@ -58,6 +61,13 @@ export class SlackService {
       blocks.push({
         type: 'section',
         text: { type: 'mrkdwn', text: '⚠️ *자동 제재 적용됨* — 피신고 계정이 즉시 정지되었습니다.' },
+      });
+    }
+
+    if (this.adminReportsUrl) {
+      blocks.push({
+        type: 'section',
+        text: { type: 'mrkdwn', text: `<${this.adminReportsUrl}|🔗 관리자에서 신고 목록 열기>` },
       });
     }
 

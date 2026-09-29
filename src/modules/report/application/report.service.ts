@@ -71,6 +71,7 @@ export class ReportService {
       );
 
       let sanctioned = false;
+      let targetNickname: string | null = null;
 
       if (command.targetUserId) {
         // 원자적 증가 — 동시 신고 시 lost update 방지
@@ -78,8 +79,9 @@ export class ReportService {
 
         const target = await userRepo.findOne({
           where: { id: command.targetUserId },
-          select: { id: true, reportCount: true, status: true },
+          select: { id: true, reportCount: true, status: true, nickname: true },
         });
+        targetNickname = target?.nickname ?? null;
 
         const instant = report.requiresInstantSanction();
         const overThreshold = (target?.reportCount ?? 0) >= SANCTION_THRESHOLD;
@@ -96,10 +98,19 @@ export class ReportService {
       await this.cache.del(CacheKey.reportPendingCount(), CacheKey.adminDashboard());
       if (command.targetUserId) await this.cache.del(`auth:user:${command.targetUserId}`);
 
-      // Slack 알림 — 트랜잭션 밖에서 fire & forget (실패해도 신고 접수에 영향 없음)
+      // 신고자 닉네임까지 조회해 Slack 에서 누가 누굴 신고했는지 바로 식별 가능하게 한다
+      const reporter = await userRepo.findOne({
+        where: { id: command.reporterId },
+        select: { id: true, nickname: true },
+      });
+      const withName = (nick: string | null, id: string) => (nick ? `${nick} (id=${id})` : `id=${id}`);
+
+      // Slack 알림 — fire & forget (실패해도 신고 접수에 영향 없음)
       this.slack.sendReport({
-        reporterDisplay: `id=${command.reporterId}`,
-        targetDisplay: command.targetUserId ? `id=${command.targetUserId}` : `${command.targetType}(${command.targetId})`,
+        reporterDisplay: withName(reporter?.nickname ?? null, command.reporterId),
+        targetDisplay: command.targetUserId
+          ? withName(targetNickname, command.targetUserId)
+          : `${command.targetType}(${command.targetId})`,
         reason: command.reason,
         targetType: command.targetType,
         detail: command.detail,

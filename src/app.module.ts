@@ -59,6 +59,8 @@ import { ScannerBlockMiddleware } from './shared/http/scanner-block.middleware';
         migrations: ['dist/migrations/*.js'],
         migrationsRun: process.env.NODE_ENV === 'production',
         logging: config.get<boolean>('database.logging'),
+        // 느린 쿼리(1s 초과)는 logging 플래그와 무관하게 경고 로그로 남겨 병목을 추적한다
+        maxQueryExecutionTime: 1000,
         // DB 를 별도 서버로 분리하므로 커넥션 상한을 명시해 비용/한도를 통제
         extra: {
           max: config.get<number>('database.poolSize'),
